@@ -1,3 +1,4 @@
+import gymnasium as gym
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -8,8 +9,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 API_KEY = os.getenv("TIINGO_API_KEY")
-
-print(API_KEY)
 
 def get_tiingo_price_data(symbol, start_date, end_date):
     url = f"https://api.tiingo.com/tiingo/daily/{symbol}/prices"
@@ -30,7 +29,7 @@ def get_tiingo_price_data(symbol, start_date, end_date):
         raise error
 
 
-def test_portfolio_one_week(portfolio, current_backtest_date, interval=timedelta(weeks=2)):
+def test_portfolio_one_week(portfolio, current_backtest_date, interval=timedelta(weeks=8)):
     after_interval_backtest_date = current_backtest_date + interval
     request_start_date = current_backtest_date.strftime("%Y-%m-%d")
     request_end_date = after_interval_backtest_date.strftime("%Y-%m-%d")
@@ -42,7 +41,7 @@ def test_portfolio_one_week(portfolio, current_backtest_date, interval=timedelta
     
     weights = list(portfolio.values())
     prices.columns = list(portfolio.keys())
-    print(prices)
+    #print(prices)
 
     weekly_groups = []
     for _, week_price_data in prices.groupby(pd.Grouper(freq="W-MON", label="left", closed="left")):
@@ -56,44 +55,28 @@ def test_portfolio_one_week(portfolio, current_backtest_date, interval=timedelta
 
 
 def run_backtest():
-    starting_backtest_portfolio = {"AAPL": 0.25, "MSFT": 0.25, "GOOGL": 0.5}
+    starting_backtest_portfolio = {"AAPL": 0.4, "MSFT": 0.4, "GOOGL": 0.2}
     current_backtest_date = datetime(2024, 6, 1)
-    backtest_portfolio_returns_df = pd.DataFrame(columns=["Date", "PortfolioValue"])
 
     try:
-        backtest_return_over_interval, current_backtest_date = test_portfolio_one_week(starting_backtest_portfolio, current_backtest_date)
+        backtest_weekly_groups = test_portfolio_one_week(starting_backtest_portfolio, current_backtest_date)
     except ValueError as error:
         print(f"Backtest Failed: {error}")
         return
-    interval_date = backtest_return_over_interval.index[0]
-    interval_return = backtest_return_over_interval.iloc[0]
-    backtest_portfolio_returns_df.loc[len(backtest_portfolio_returns_df)] = [interval_date, interval_return]
+    
+    weekly_values = pd.concat([val for val, _ in backtest_weekly_groups])
+    print(weekly_values)
 
-    backtest_portfolio_returns_df['TotalCumulativeReturn'] = backtest_portfolio_returns_df['PortfolioValue'].cumprod()
-
-    print(backtest_portfolio_returns_df)
-
-    plot_portfolio_value_df = backtest_portfolio_returns_df.set_index('Date')
-
-    plot_portfolio_value_df['TotalCumulativeReturn'].plot(title="Portfolio Cumulative Return")
+    plt.figure(figsize=(10, 5))
+    plt.plot(weekly_values)
+    plt.title("Cumulative Portfolio Return Over Time")
     plt.xlabel("Date")
-    plt.ylabel("Portfolio Value")
+    plt.ylabel("Cumulative Return")
     plt.grid(True)
     plt.show()
-
-    # backtest_portfolio_returns_df.plot(title="Portfolio Cumulative Return")
-    # plt.xlabel("Date")
-    # plt.ylabel("Portfolio Value")
-    # plt.grid(True)
-    # plt.show()
 
 if __name__ == "__main__":
     run_backtest()
 
-#TO DO: Work out to not have empty value at start of interval?
-#TO DO: Label dataframes with df?
-
 #Plan
-#1. Upload to Git
-#2. One request per symbol and then slice up
 #3. Save historic price data

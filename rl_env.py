@@ -1,0 +1,96 @@
+import gymnasium as gym
+from gymnasium import spaces
+import numpy as np
+import pandas as pd
+from stable_baselines3.common.env_checker import check_env
+
+def format_weights(tickers, weights):
+    formatted_weights = {}
+    for i in range(len(weights)):
+        if weights[i] > 0:
+            formatted_weights[tickers[i]] = float(weights[i])
+    return formatted_weights
+
+def _softmax(self, x):
+    e_x = np.exp(x - np.max(x))
+    return e_x / e_x.sum(axis=0)
+
+class PortfolioEnv(gym.Env):
+    metadata = {"render_modes": ["human"]}
+
+    def __init__(self, prices: pd.DataFrame, window_size=40, transaction_cost = 0.002):
+        super(PortfolioEnv, self).__init__()
+
+        self.prices = prices.values  # shape (T, 2)
+        self.dates = prices.index
+        self.tickers = list(prices.columns)
+        self.window_size = window_size
+        self.current_step = window_size
+        self.transaction_cost = transaction_cost
+
+        #TO DO: Should I treat cash as static?
+        self.n_assets = self.prices.shape[1] + 1
+
+        self.action_space = spaces.Box(
+            low=-np.float32(np.inf), 
+            high=np.float32(np.inf), 
+            shape=(self.n_assets,), 
+            dtype=np.float32
+        )
+
+        # Observation: normalized prices for both assets over past N weeks
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(window_size * self.n_assets,), dtype=np.float32
+        )
+
+        #self.weights = np.ones(self.n_assets) / self.n_assets
+        #TO DO: Should I initialise all weights at zero?
+        self.weights = np.zeros(self.n_assets)
+        self.portfolio_value = 1.0
+
+    def _get_observation(self):
+        window = self.prices[self.current_step - self.window_size : self.current_step]
+        norm = window / (window[0] + 1e-8) - 1.0
+        return norm.flatten().astype(np.float32)    
+    
+    def step(self, action):
+        # Normalize weights to sum to 1
+        # TO DO: Should this be done?
+        weights = np.clip(action, 0, 1)
+        total_weight = np.sum(weights) + 1e-8
+        weights = weights / total_weight
+        self.weights = weights
+
+        #Below can potentially be changed as we already calculated portfolio returns? But probably not
+        prev_prices = self.prices[self.current_step - 1]
+        current_prices = self.prices[self.current_step]
+
+        # Compute per-asset returns
+        asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
+
+        # Portfolio return
+        portfolio_return = np.dot(weights, asset_returns)
+        reward = portfolio_return
+
+        self.portfolio_value *= (1 + reward)
+        self.current_step += 1
+        done = self.current_step >= len(self.prices)
+
+        obs = self._get_observation()
+        info = {"portfolio_value": self.portfolio_value, "weights": weights}
+
+        return obs, reward, done, False, info
+    
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
+        self.current_step = self.window_size
+        self.portfolio_value = 1.0
+        self.weights = np.ones(self.n_assets) / self.n_assets
+
+        obs = self._get_observation()
+        info = {}
+        return obs, info
+
+    def render(self):
+        current_date_str = self.dates[self.current_step - 1].strftime('%Y-%m-%d')
+        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, {format_weights(self.tickers, self.weights)}")    
