@@ -11,10 +11,6 @@ def format_weights(tickers, weights):
             formatted_weights[tickers[i]] = float(weights[i])
     return formatted_weights
 
-def _softmax(self, x):
-    e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum(axis=0)
-
 class PortfolioEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
@@ -23,7 +19,7 @@ class PortfolioEnv(gym.Env):
 
         self.prices = prices.values  # shape (T, 2)
         self.dates = prices.index
-        self.tickers = list(prices.columns)
+        self.tickers = ["CASH"] + list(prices.columns)
         self.window_size = window_size
         self.current_step = window_size
         self.transaction_cost = transaction_cost
@@ -32,15 +28,21 @@ class PortfolioEnv(gym.Env):
         self.n_assets = self.prices.shape[1] + 1
 
         self.action_space = spaces.Box(
-            low=-np.float32(np.inf), 
-            high=np.float32(np.inf), 
+            low=-10.0,
+            high=10.0,
             shape=(self.n_assets,), 
             dtype=np.float32
         )
+        # self.action_space = spaces.Box(
+        #     low=0.0,
+        #     high=1.0,
+        #     shape=(self.n_assets,), 
+        #     dtype=np.float32
+        # )
 
         # Observation: normalized prices for both assets over past N weeks
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(window_size * self.n_assets,), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(window_size * (self.n_assets - 1),), dtype=np.float32
         )
 
         #self.weights = np.ones(self.n_assets) / self.n_assets
@@ -48,18 +50,23 @@ class PortfolioEnv(gym.Env):
         self.weights = np.zeros(self.n_assets)
         self.portfolio_value = 1.0
 
+    def _softmax(self, x, temp=0.05):
+        z = x / temp
+        e_z = np.exp(z - np.max(z))
+        return e_z / e_z.sum()
+
     def _get_observation(self):
         window = self.prices[self.current_step - self.window_size : self.current_step]
         norm = window / (window[0] + 1e-8) - 1.0
         return norm.flatten().astype(np.float32)    
     
     def step(self, action):
-        # Normalize weights to sum to 1
-        # TO DO: Should this be done?
-        weights = np.clip(action, 0, 1)
-        total_weight = np.sum(weights) + 1e-8
-        weights = weights / total_weight
+        weights = self._softmax(action)
         self.weights = weights
+        # total_weight = np.sum(weights) + 1e-8
+        # weights = weights / total_weight
+        # self.weights = weights
+
 
         #Below can potentially be changed as we already calculated portfolio returns? But probably not
         prev_prices = self.prices[self.current_step - 1]
@@ -67,9 +74,10 @@ class PortfolioEnv(gym.Env):
 
         # Compute per-asset returns
         asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
+        asset_returns_with_cash = np.append(0, asset_returns)
 
         # Portfolio return
-        portfolio_return = np.dot(weights, asset_returns)
+        portfolio_return = np.dot(weights, asset_returns_with_cash)
         reward = portfolio_return
 
         self.portfolio_value *= (1 + reward)
