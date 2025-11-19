@@ -2,7 +2,6 @@ import gymnasium as gym
 from gymnasium import spaces
 import numpy as np
 import pandas as pd
-from stable_baselines3.common.env_checker import check_env
 
 def format_weights(tickers, weights):
     formatted_weights = {}
@@ -14,7 +13,7 @@ def format_weights(tickers, weights):
 class PortfolioEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, prices: pd.DataFrame, window_size=40, transaction_cost = 0.002):
+    def __init__(self, prices: pd.DataFrame, window_size=40, transaction_cost = 0.001):
         super(PortfolioEnv, self).__init__()
 
         self.prices = prices.values  # shape (T, 2)
@@ -45,10 +44,7 @@ class PortfolioEnv(gym.Env):
             low=-np.inf, high=np.inf, shape=(window_size * (self.n_assets - 1),), dtype=np.float32
         )
 
-        #self.weights = np.ones(self.n_assets) / self.n_assets
-        #TO DO: Should I initialise all weights at zero?
-        self.weights = np.zeros(self.n_assets)
-        self.portfolio_value = 1.0
+        self.weights, self.portfolio_value = None, None
 
     def _softmax(self, x, temp=0.05):
         z = x / temp
@@ -61,23 +57,29 @@ class PortfolioEnv(gym.Env):
         return norm.flatten().astype(np.float32)    
     
     def step(self, action):
-        weights = self._softmax(action)
-        self.weights = weights
+        #TO DO: Is sparsemax worth pursuing?
+        new_weights = self._softmax(action)
         # total_weight = np.sum(weights) + 1e-8
         # weights = weights / total_weight
         # self.weights = weights
 
+        if self.current_step > self.window_size:
+            turnover = np.sum(np.abs(new_weights - self.weights)) / 2.0
+            self.cost = self.portfolio_value * turnover * self.transaction_cost
+        else:
+            self.cost = 0.0 #This occurs on very first step when initially allocating portfolio
 
-        #Below can potentially be changed as we already calculated portfolio returns? But probably not
+        self.portfolio_value -= self.cost
+
+        #Below can potentially be changed as we already calculated portfolio returns? But probably not.
         prev_prices = self.prices[self.current_step - 1]
         current_prices = self.prices[self.current_step]
 
-        # Compute per-asset returns
+        #Compute returns per asset and then combine with cash
         asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
         asset_returns_with_cash = np.append(0, asset_returns)
 
-        # Portfolio return
-        portfolio_return = np.dot(weights, asset_returns_with_cash)
+        portfolio_return = np.dot(new_weights, asset_returns_with_cash)
         reward = portfolio_return
 
         self.portfolio_value *= (1 + reward)
@@ -85,7 +87,9 @@ class PortfolioEnv(gym.Env):
         done = self.current_step >= len(self.prices)
 
         obs = self._get_observation()
-        info = {"portfolio_value": self.portfolio_value, "weights": weights}
+        info = {"portfolio_value": self.portfolio_value, "weights": new_weights}
+
+        self.weights = new_weights
 
         return obs, reward, done, False, info
     
@@ -93,7 +97,8 @@ class PortfolioEnv(gym.Env):
         super().reset(seed=seed)
         self.current_step = self.window_size
         self.portfolio_value = 1.0
-        self.weights = np.ones(self.n_assets) / self.n_assets
+        self.weights = np.zeros(self.n_assets)
+        self.weights[0] = 1.0
 
         obs = self._get_observation()
         info = {}
@@ -101,4 +106,4 @@ class PortfolioEnv(gym.Env):
 
     def render(self):
         current_date_str = self.dates[self.current_step - 1].strftime('%Y-%m-%d')
-        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, {format_weights(self.tickers, self.weights)}")    
+        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)}")    
