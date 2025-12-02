@@ -63,13 +63,16 @@ class PortfolioEnv(gym.Env):
         # weights = weights / total_weight
         # self.weights = weights
 
+        portfolio_value_before_step = self.portfolio_value
+
         if self.current_step > self.window_size:
             turnover = np.sum(np.abs(new_weights - self.weights)) / 2.0
             self.cost = self.portfolio_value * turnover * self.transaction_cost
         else:
             self.cost = 0.0 #This occurs on very first step when initially allocating portfolio
-
-        self.portfolio_value -= self.cost
+        
+        #TO DO: Rewrite this functionality better
+        portfolio_value_after_cost = self.portfolio_value - self.cost
 
         #Below can potentially be changed as we already calculated portfolio returns? But probably not.
         prev_prices = self.prices[self.current_step - 1]
@@ -80,9 +83,10 @@ class PortfolioEnv(gym.Env):
         asset_returns_with_cash = np.append(0, asset_returns)
 
         portfolio_return = np.dot(new_weights, asset_returns_with_cash)
-        reward = portfolio_return
+        self.portfolio_value = portfolio_value_after_cost * (1 + portfolio_return)
 
-        self.portfolio_value *= (1 + reward)
+        reward = (self.portfolio_value - portfolio_value_before_step) / portfolio_value_before_step
+        
         self.current_step += 1
         done = self.current_step >= len(self.prices)
 
