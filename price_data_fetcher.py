@@ -40,10 +40,9 @@ def fetch_tiingo_price_data_for_all_symbols():
     try:
         price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, start_date, 340) for symbol in all_symbols}, axis=1)
     except ValueError as error:
-        print(f"Backtest Failed: {error}")
-        return
+        raise error
     
-    return price_df
+    return price_df #TO DO: Change to prices_df
 
 if __name__ == "__main__":
     print(fetch_tiingo_price_data_for_all_symbols())

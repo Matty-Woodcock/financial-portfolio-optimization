@@ -1,11 +1,15 @@
 from rl_env import PortfolioEnv
-from price_data_fetcher import fetch_tiingo_price_data_for_all_symbols
+from price_data_reader_writer import load_or_update_price_data
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3 import PPO
 
-if __name__ == "__main__":
-    prices_df = fetch_tiingo_price_data_for_all_symbols()
-    
+def main():
+    try:
+        prices_df = load_or_update_price_data()
+    except ValueError as error:
+        print(f"Fetching Price Data Failed: {error}")
+        return
+
     train_split_index = int(len(prices_df) * 0.7)
     eval_split_index = int(len(prices_df) * 0.85)
     
@@ -24,7 +28,7 @@ if __name__ == "__main__":
     callback = EvalCallback(eval_env, 
                             best_model_save_path='./logs/',
                             log_path='./logs/', 
-                            eval_freq=1000,
+                            eval_freq=2000,
                             deterministic=True, 
                             render=False)
 
@@ -32,7 +36,7 @@ if __name__ == "__main__":
     model = PPO("MlpPolicy", train_env, verbose=1)
 
     print("Training Starting")
-    model.learn(total_timesteps=10000, callback=callback)
+    model.learn(total_timesteps=8000, callback=callback)
     print("Training Complete")
 
 
@@ -47,3 +51,6 @@ if __name__ == "__main__":
         action, _states = best_model.predict(obs, deterministic=True)
         obs, reward, done, truncated, info = test_env.step(action)
         test_env.render()
+
+if __name__ == "__main__":
+    main()
