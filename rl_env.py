@@ -3,6 +3,8 @@ from gymnasium import spaces
 import numpy as np
 import pandas as pd
 
+from test_metrics_calculator import calculate_hhi_metric
+
 def format_weights(tickers, weights):
     formatted_weights = {}
     for i in range(len(weights)):
@@ -45,6 +47,7 @@ class PortfolioEnv(gym.Env):
         )
 
         self.weights, self.portfolio_value = None, None
+        self.weights_history = []
 
     def _softmax(self, x, temp=0.05):
         z = x / temp
@@ -94,6 +97,7 @@ class PortfolioEnv(gym.Env):
         info = {"portfolio_value": self.portfolio_value, "weights": new_weights}
 
         self.weights = new_weights
+        self.weights_history.append(self.weights)
 
         return obs, reward, done, False, info
     
@@ -111,3 +115,6 @@ class PortfolioEnv(gym.Env):
     def render(self):
         current_date_str = self.dates[self.current_step - 1].strftime('%Y-%m-%d')
         print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)}")    
+
+    def get_metrics(self) -> list[int]:
+        return [self.portfolio_value, calculate_hhi_metric(self.weights_history)]

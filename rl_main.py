@@ -3,7 +3,7 @@ from price_data_reader_writer import load_or_update_price_data
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3 import PPO
 
-def main():
+def train_and_test_one_policy(render=False):
     try:
         prices_df = load_or_update_price_data()
     except ValueError as error:
@@ -50,7 +50,10 @@ def main():
     while not done:
         action, _states = best_model.predict(obs, deterministic=True)
         obs, reward, done, truncated, info = test_env.step(action)
-        test_env.render()
+        if render:
+            test_env.render()
+
+    return test_env.get_metrics()
 
 if __name__ == "__main__":
-    main()
+    train_and_test_one_policy(render=True)
