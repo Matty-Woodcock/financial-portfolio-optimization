@@ -6,9 +6,9 @@ def calculate_hhi_metric(weights_history):
     hhi_history = []
     for daily_weights in weights_history: 
         hhi_history.append(np.sum(np.square(daily_weights)))
-    plot_metric(hhi_history)
-    if np.mean(hhi_history) > 0.2: #TO DO: Remove this testing
-        print(weights_history)
+    # plot_metric(hhi_history)
+    # if np.mean(hhi_history) > 0.1: #TO DO: Remove this testing
+    #     print(weights_history)
     return np.mean(hhi_history)
 
 def plot_metric(y):
