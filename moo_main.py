@@ -1,7 +1,7 @@
 from rl_main import train_and_test_one_policy
 
 def moo(all_policy_metrics): #TO DO: What to do when metrics are almost identical?
-    directions = [+1, -1] #Needs to be updated when new metrics are added
+    directions = [+1, -1, +1] #Needs to be updated when new metrics are added
     all_non_dominated_policy_metrics = []
 
     for i, policy_a in enumerate(all_policy_metrics):
