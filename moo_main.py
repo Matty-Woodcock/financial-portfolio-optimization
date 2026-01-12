@@ -51,3 +51,9 @@ def main():
        
 if __name__ == "__main__":
     main()
+
+#TO DO:
+#1. Baselines - Done?
+#2. Different Reward Functions
+#3. Visualization
+#4. Risk

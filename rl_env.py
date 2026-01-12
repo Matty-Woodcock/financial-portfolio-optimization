@@ -57,6 +57,8 @@ class PortfolioEnv(gym.Env):
 
     def _get_observation(self):
         window = self.prices[self.current_step - self.window_size : self.current_step]
+        # print(self.current_step - self.window_size, self.current_step)
+        # print(len(window))
         norm = window / (window[0] + 1e-8) - 1.0
         return norm.flatten().astype(np.float32)    
     
@@ -83,8 +85,11 @@ class PortfolioEnv(gym.Env):
         current_prices = self.prices[self.current_step]
 
         #Compute returns per asset and then combine with cash
-        asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
+        #asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
+        asset_returns = (current_prices - prev_prices) / prev_prices
         asset_returns_with_cash = np.append(0, asset_returns)
+
+        # self.one, self.two, self.three = prev_prices, current_prices, asset_returns
 
         portfolio_return = np.dot(new_weights, asset_returns_with_cash)
         self.portfolio_value = portfolio_value_after_cost * (1 + portfolio_return)
@@ -117,7 +122,9 @@ class PortfolioEnv(gym.Env):
 
     def render(self):
         current_date_str = self.dates[self.current_step - 1].strftime('%Y-%m-%d')
-        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)}")    
+        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)} {self.current_step - 2}") 
+        # print(self.one, self.two, self.three)
+        # input("xxx")   
 
     def get_metrics(self) -> list[int]:
         return [self.portfolio_value, calculate_hhi_metric(self.weights_history), calculate_mdd_metric(self.portfolio_value_history)]
