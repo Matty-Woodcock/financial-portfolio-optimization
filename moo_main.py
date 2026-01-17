@@ -1,8 +1,16 @@
+import matplotlib.pyplot as plt
+
 from rl_main import train_and_test_one_policy
 
-def moo(all_policy_metrics): #TO DO: What to do when metrics are almost identical?
-    directions = [+1, -1, +1] #Needs to be updated when new metrics are added
-    all_non_dominated_policy_metrics = []
+def extract_aggregates(policy_metric_summaries):
+    return [
+        policy_metric_summaries["portfolio_value"].aggregate,
+        policy_metric_summaries["hhi"].aggregate,
+        policy_metric_summaries["mdd"].aggregate
+    ]
+
+def moo(all_policy_metrics, directions): #TO DO: What to do when metrics are almost identical?
+    all_non_dominated_policy_indices = []
 
     for i, policy_a in enumerate(all_policy_metrics):
         policy_a_dominated = False
@@ -33,27 +41,65 @@ def moo(all_policy_metrics): #TO DO: What to do when metrics are almost identica
                 break
 
         if not policy_a_dominated:
-            all_non_dominated_policy_metrics.append(policy_a)
+            all_non_dominated_policy_indices.append(i)
 
-    return all_non_dominated_policy_metrics
+    return all_non_dominated_policy_indices
 
 def main():
-    all_policy_metrics = []
+    all_policy_metric_summaries = []
+    all_policy_metric_aggregates = []
 
-    for i in range(10):
-        all_policy_metrics.append(train_and_test_one_policy())
+    for i in range(1):
+        policy_metric_summaries = train_and_test_one_policy()
+        all_policy_metric_summaries.append(policy_metric_summaries)
+        all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
+        
+    directions = [
+        policy_metric_summaries["portfolio_value"].direction,
+        policy_metric_summaries["hhi"].direction,
+        policy_metric_summaries["mdd"].direction
+    ]
 
-    print(all_policy_metrics)
+    print(all_policy_metric_aggregates)
 
-    all_non_dominated_policy_metrics = moo(all_policy_metrics)
+    pareto_front_policy_indicies = moo(all_policy_metric_aggregates, directions)
 
-    print(all_non_dominated_policy_metrics)
-       
+    pareto_front_policy_metric_summaries = [all_policy_metric_summaries[i] for i in pareto_front_policy_indicies]
+
+    print([extract_aggregates(policy_metric_summaries) for policy_metric_summaries in pareto_front_policy_metric_summaries])
+
+    #Experimental Plotting
+
+    for policy_metric_summaries in pareto_front_policy_metric_summaries:
+        fig, ax1 = plt.subplots()
+
+        ax2 = ax1.twinx() #Second y-axis for HHI
+
+        ax1.plot(
+            policy_metric_summaries["portfolio_value"].series,
+            label="Portfolio Value",
+            alpha=0.8
+        )
+
+        ax2.plot(
+            policy_metric_summaries["hhi"].series,
+            linestyle=":",
+            label="HHI",
+            alpha=0.8
+        )
+
+        ax1.set_xlabel("Time")
+        ax1.set_ylabel("Portfolio Value (Solid)")
+        ax2.set_ylabel("HHI (Dotted)")
+        plt.title(f"Return = {policy_metric_summaries['portfolio_value'].aggregate}")
+
+        plt.show()
+
 if __name__ == "__main__":
     main()
 
 #TO DO:
 #1. Baselines - Done?
-#2. Different Reward Functions
-#3. Visualization
+#2. Visualisation - Expand
+#3. Different Reward Functions
 #4. Risk

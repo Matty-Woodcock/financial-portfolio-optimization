@@ -17,16 +17,16 @@ def main():
 
     #Choose portfolio weights for baseline
     #["CASH", "AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ", "TLT", "GLD"]
-    baseline_weights = [1/9] * 9
-    #baseline_weights = [0, 0, 0, 0, 0, 0, 0, 0, 1]
+    #baseline_weights = [1/9] * 9
+    baseline_weights = [0, 0, 0, 0, 0, 1, 0, 0, 0]
 
     asset_returns = test_df_excluding_window.pct_change().dropna()
     cash_returns = np.zeros((len(asset_returns), 1))
     asset_returns_with_cash = np.hstack([cash_returns, asset_returns.values])
 
     portfolio_returns = asset_returns_with_cash @ baseline_weights
-    portfolio_value = (1 + portfolio_returns).cumprod()
-    print(portfolio_value)
+    portfolio_values = (1 + portfolio_returns).cumprod()
+    print(portfolio_values)
 
 if __name__ == "__main__":
     main()

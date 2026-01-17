@@ -3,7 +3,7 @@ from gymnasium import spaces
 import numpy as np
 import pandas as pd
 
-from test_metrics_calculator import calculate_hhi_metric, calculate_mdd_metric
+from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric
 
 def format_weights(tickers, weights):
     formatted_weights = {}
@@ -126,5 +126,29 @@ class PortfolioEnv(gym.Env):
         # print(self.one, self.two, self.three)
         # input("xxx")   
 
-    def get_metrics(self) -> list[int]:
-        return [self.portfolio_value, calculate_hhi_metric(self.weights_history), calculate_mdd_metric(self.portfolio_value_history)]
+    def get_metric_summaries(self) -> dict[str, MetricSummary]:
+        #return [self.portfolio_value, calculate_hhi_metric(self.weights_history), calculate_mdd_metric(self.portfolio_value_history)]
+
+        hhi_series, mean_hhi = calculate_hhi_metric(self.weights_history)
+        mdd_series, max_drawdown = calculate_mdd_metric(self.portfolio_value_history)
+
+        return {
+            "portfolio_value": MetricSummary(
+                name = "Final Portfolio Value",
+                direction = +1,
+                series = self.portfolio_value_history,
+                aggregate = self.portfolio_value_history[-1]
+            ),
+            "hhi": MetricSummary(
+                name = "Mean HHI",
+                direction = -1,
+                series = hhi_series,
+                aggregate=mean_hhi
+            ),
+            "mdd": MetricSummary(
+                name = "Max Drawdown",
+                direction = +1,
+                series = mdd_series,
+                aggregate = max_drawdown
+            )
+        }

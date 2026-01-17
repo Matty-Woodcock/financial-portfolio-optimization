@@ -1,6 +1,17 @@
 import numpy as np  
 import matplotlib.pyplot as plt
 
+from dataclasses import dataclass
+
+#TO DO: Split this file up?
+
+@dataclass
+class MetricSummary:
+    name: str
+    direction: int
+    series: list[float]
+    aggregate: float
+
 #Herfindahl–Hirschman Index (HHI)
 def calculate_hhi_metric(weights_history): #TO DO: Implement Vectorization
     hhi_history = []
@@ -9,7 +20,7 @@ def calculate_hhi_metric(weights_history): #TO DO: Implement Vectorization
     # plot_metric(hhi_history)
     # if np.mean(hhi_history) > 0.1: #TO DO: Remove this testing
     #     print(weights_history)
-    return np.mean(hhi_history)
+    return hhi_history, np.mean(hhi_history)
 
 #Maximum Drawdown (MDD)
 def calculate_mdd_metric(portfolio_value_history): #TO DO: Implement Vectorization
@@ -19,15 +30,18 @@ def calculate_mdd_metric(portfolio_value_history): #TO DO: Implement Vectorizati
         peak_porfolio_value = max(peak_porfolio_value, daily_portfolio_value)
         mdd_history.append((daily_portfolio_value - peak_porfolio_value) / peak_porfolio_value)
     #plot_metric(mdd_history) #TO DO: Remove this testing
-    return min(mdd_history)
+    return mdd_history, min(mdd_history)
 
-def plot_metric(y):
-    y = np.asarray(y)
-    x = np.arange(len(y))
+# def plot_metric(y):
+#     y = np.asarray(y)
+#     x = np.arange(len(y))
 
-    plt.figure()
-    plt.plot(x, y)
-    plt.xlabel("Day")
-    plt.ylabel("Value")
-    plt.title("Metric Over Time")
-    plt.show()
+#     plt.figure()
+#     plt.plot(x, y)
+#     plt.xlabel("Day")
+#     plt.ylabel("Value")
+#     plt.title("Metric Over Time")
+#     plt.show()
+
+
+

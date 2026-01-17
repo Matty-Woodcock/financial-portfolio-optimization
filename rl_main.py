@@ -53,7 +53,7 @@ def train_and_test_one_policy(render=False):
         if render:
             test_env.render()
 
-    return test_env.get_metrics()
+    return test_env.get_metric_summaries()
 
 if __name__ == "__main__":
     train_and_test_one_policy(render=True)
