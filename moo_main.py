@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 from rl_main import train_and_test_one_policy
+from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH
 
 def extract_aggregates(policy_metric_summaries):
     return [
@@ -70,9 +72,18 @@ def main():
 
     #Experimental Plotting
 
-    for policy_metric_summaries in pareto_front_policy_metric_summaries:
-        fig, ax1 = plt.subplots()
+    cmap = plt.get_cmap("tab10")
+    COLOR_MAP = {symbol: cmap(i) for i, symbol in enumerate(ALL_SYMBOLS_WITH_CASH)}
 
+    for policy_metric_summaries in pareto_front_policy_metric_summaries:
+        fig, axes = plt.subplots(
+            nrows=3,
+            ncols=1,
+            figsize=(12, 10),
+            sharex=True
+        )
+
+        ax1 = axes[0]
         ax2 = ax1.twinx() #Second y-axis for HHI
 
         ax1.plot(
@@ -93,12 +104,58 @@ def main():
         ax2.set_ylabel("HHI (Dotted)")
         plt.title(f"Return = {policy_metric_summaries['portfolio_value'].aggregate}")
 
+        #Portfolio Weights
+
+        weights = np.vstack(policy_metric_summaries["portfolio_weights"].series)
+        t = np.arange(weights.shape[0])
+
+        assert weights.shape[1] == len(ALL_SYMBOLS_WITH_CASH)
+
+        ax_w = axes[1]
+        ax_w.stackplot(
+            t,
+            weights.T,
+            colors=[COLOR_MAP[symbol] for symbol in ALL_SYMBOLS_WITH_CASH],
+            labels=ALL_SYMBOLS_WITH_CASH
+        )
+
+        ax_w.set_ylabel("Weight")
+        ax_w.set_xlabel("Days")
+        ax_w.set_title("Portfolio Weights Over Time")
+        ax_w.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.2),
+            ncol=len(ALL_SYMBOLS_WITH_CASH)
+        )
+
+        #Ticker Prices
+
+        prices = policy_metric_summaries["ticker_prices"].series[39:] #Prices in initial observation window are discarded
+        prices_norm = prices / prices[0]
+
+        ax_p = axes[2]
+
+        for i, symbol in enumerate(ALL_SYMBOLS):
+            ax_p.plot(prices_norm[:, i], color=COLOR_MAP[symbol], label=symbol)
+
+        ax_p.set_ylabel("Normalised Price")
+        ax_p.set_xlabel("Days")
+        ax_p.set_title("Ticker Prices (Normalised)")
+
+        ax_p.legend(
+            loc="upper center",
+            bbox_to_anchor=(0.5, -0.2),
+            ncol=len(ALL_SYMBOLS)
+        )
+
+        plt.tight_layout()
         plt.show()
 
 if __name__ == "__main__":
     main()
 
 #TO DO:
+#0. Fix graph colours
 #1. Baselines - Done?
 #2. Visualisation - Expand
 #3. Different Reward Functions

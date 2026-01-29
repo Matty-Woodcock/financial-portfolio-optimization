@@ -6,6 +6,8 @@ import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
+from config.constants import ALL_SYMBOLS
+
 load_dotenv()
 API_KEY = os.getenv("TIINGO_API_KEY")
 
@@ -34,11 +36,10 @@ def fetch_tiingo_price_data_for_symbol(symbol, start_date_dt, num_weeks = 8):
     
 
 def fetch_tiingo_price_data_for_all_symbols():
-    all_symbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ", "TLT", "GLD"]
     start_date = datetime(2018, 6, 1)
 
     try:
-        price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, start_date, 340) for symbol in all_symbols}, axis=1)
+        price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, start_date, 340) for symbol in ALL_SYMBOLS}, axis=1)
     except ValueError as error:
         raise error
     

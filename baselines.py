@@ -17,8 +17,8 @@ def main():
 
     #Choose portfolio weights for baseline
     #["CASH", "AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ", "TLT", "GLD"]
-    #baseline_weights = [1/9] * 9
-    baseline_weights = [0, 0, 0, 0, 0, 1, 0, 0, 0]
+    baseline_weights = [1/9] * 9
+    #baseline_weights = [0, 0, 0, 0, 0, 1, 0, 0, 0]
 
     asset_returns = test_df_excluding_window.pct_change().dropna()
     cash_returns = np.zeros((len(asset_returns), 1))

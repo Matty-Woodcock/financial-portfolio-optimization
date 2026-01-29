@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric
+from config.constants import ALL_SYMBOLS_WITH_CASH
 
 def format_weights(tickers, weights):
     formatted_weights = {}
@@ -20,7 +21,7 @@ class PortfolioEnv(gym.Env):
 
         self.prices = prices.values  # shape (T, 2)
         self.dates = prices.index
-        self.tickers = ["CASH"] + list(prices.columns)
+        self.tickers = ALL_SYMBOLS_WITH_CASH
         self.window_size = window_size
         self.current_step = window_size
         self.transaction_cost = transaction_cost
@@ -150,5 +151,17 @@ class PortfolioEnv(gym.Env):
                 direction = +1,
                 series = mdd_series,
                 aggregate = max_drawdown
+            ),
+            "portfolio_weights": MetricSummary(
+                name = "Portfolio Weights",
+                direction = None,
+                series = self.weights_history,
+                aggregate = None
+            ),
+            "ticker_prices": MetricSummary(
+                name = "Ticker Prices",
+                direction = None,
+                series = self.prices,
+                aggregate = None
             )
         }
