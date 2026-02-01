@@ -1,9 +1,11 @@
 from rl_env import PortfolioEnv
+from rl_reward import RewardFunction, PureReturn
 from price_data_reader_writer import load_or_update_price_data
+
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3 import PPO
 
-def train_and_test_one_policy(render=False):
+def train_and_test_one_policy(reward_function: RewardFunction, render=False):
     try:
         prices_df = load_or_update_price_data()
     except ValueError as error:
@@ -21,9 +23,9 @@ def train_and_test_one_policy(render=False):
     print(f"Evaluating on {len(eval_df)} days.") #174
     print(f"Testing on {len(test_df)} days.") #174
 
-    train_env = PortfolioEnv(train_df, window_size=40)
-    eval_env = PortfolioEnv(eval_df, window_size=40)
-    test_env = PortfolioEnv(test_df, window_size=40)
+    train_env = PortfolioEnv(train_df, reward_function)
+    eval_env = PortfolioEnv(eval_df, reward_function)
+    test_env = PortfolioEnv(test_df, reward_function)
 
     callback = EvalCallback(eval_env, 
                             best_model_save_path='./logs/',

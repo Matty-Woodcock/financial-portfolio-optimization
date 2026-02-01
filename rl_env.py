@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 
 from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric
+from rl_reward import RewardFunction
 from config.constants import ALL_SYMBOLS_WITH_CASH
 
 def format_weights(tickers, weights):
@@ -16,8 +17,10 @@ def format_weights(tickers, weights):
 class PortfolioEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, prices: pd.DataFrame, window_size=40, transaction_cost = 0.001):
+    def __init__(self, prices: pd.DataFrame, reward_function: RewardFunction, window_size=40, transaction_cost = 0.001):
         super(PortfolioEnv, self).__init__()
+
+        self.reward_function = reward_function
 
         self.prices = prices.values  # shape (T, 2)
         self.dates = prices.index
@@ -76,7 +79,7 @@ class PortfolioEnv(gym.Env):
             turnover = np.sum(np.abs(new_weights - self.weights)) / 2.0
             self.cost = self.portfolio_value * turnover * self.transaction_cost
         else:
-            self.cost = 0.0 #This occurs on very first step when initially allocating portfolio
+            turnover, self.cost = 0.0, 0.0 #This occurs on very first step when initially allocating portfolio
         
         #TO DO: Rewrite this functionality better
         portfolio_value_after_cost = self.portfolio_value - self.cost
@@ -95,8 +98,18 @@ class PortfolioEnv(gym.Env):
         portfolio_return = np.dot(new_weights, asset_returns_with_cash)
         self.portfolio_value = portfolio_value_after_cost * (1 + portfolio_return)
 
-        reward = (self.portfolio_value - portfolio_value_before_step) / portfolio_value_before_step
-        
+        reward = self.reward_function(
+            portfolio_value_before=portfolio_value_before_step,
+            portfolio_value_after=self.portfolio_value,
+            weights=new_weights,
+            prev_weights=self.weights,
+            turnover=turnover,
+            cost=self.cost,
+        )
+
+        # deprecated_reward = (self.portfolio_value - portfolio_value_before_step) / portfolio_value_before_step
+        # assert deprecated_reward == reward
+
         self.current_step += 1
         done = self.current_step >= len(self.prices)
 
@@ -136,30 +149,35 @@ class PortfolioEnv(gym.Env):
         return {
             "portfolio_value": MetricSummary(
                 name = "Final Portfolio Value",
+                reward_function_name = self.reward_function.__class__.__name__,
                 direction = +1,
                 series = self.portfolio_value_history,
                 aggregate = self.portfolio_value_history[-1]
             ),
             "hhi": MetricSummary(
                 name = "Mean HHI",
+                reward_function_name = self.reward_function.__class__.__name__,
                 direction = -1,
                 series = hhi_series,
                 aggregate=mean_hhi
             ),
             "mdd": MetricSummary(
                 name = "Max Drawdown",
+                reward_function_name = self.reward_function.__class__.__name__,
                 direction = +1,
                 series = mdd_series,
                 aggregate = max_drawdown
             ),
             "portfolio_weights": MetricSummary(
                 name = "Portfolio Weights",
+                reward_function_name = self.reward_function.__class__.__name__,
                 direction = None,
                 series = self.weights_history,
                 aggregate = None
             ),
             "ticker_prices": MetricSummary(
                 name = "Ticker Prices",
+                reward_function_name = self.reward_function.__class__.__name__,
                 direction = None,
                 series = self.prices,
                 aggregate = None

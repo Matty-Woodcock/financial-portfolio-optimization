@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rl_main import train_and_test_one_policy
+from rl_reward import PureReturn, LogReturn
 from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH
 
 def extract_aggregates(policy_metric_summaries):
@@ -50,11 +51,14 @@ def moo(all_policy_metrics, directions): #TO DO: What to do when metrics are alm
 def main():
     all_policy_metric_summaries = []
     all_policy_metric_aggregates = []
+    
+    reward_functions = [PureReturn(), LogReturn()]
 
-    for i in range(1):
-        policy_metric_summaries = train_and_test_one_policy()
-        all_policy_metric_summaries.append(policy_metric_summaries)
-        all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
+    for i in range(5):
+        for reward_function in reward_functions:
+            policy_metric_summaries = train_and_test_one_policy(reward_function)
+            all_policy_metric_summaries.append(policy_metric_summaries)
+            all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
         
     directions = [
         policy_metric_summaries["portfolio_value"].direction,
@@ -102,7 +106,7 @@ def main():
         ax1.set_xlabel("Time")
         ax1.set_ylabel("Portfolio Value (Solid)")
         ax2.set_ylabel("HHI (Dotted)")
-        plt.title(f"Return = {policy_metric_summaries['portfolio_value'].aggregate}")
+        plt.title(f"Return = {policy_metric_summaries['portfolio_value'].aggregate}, Reward Function = {policy_metric_summaries['portfolio_value'].reward_function_name}")
 
         #Portfolio Weights
 

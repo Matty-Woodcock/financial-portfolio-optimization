@@ -8,6 +8,7 @@ from dataclasses import dataclass
 @dataclass
 class MetricSummary:
     name: str
+    reward_function_name: str
     direction: int
     series: list[float]
     aggregate: float
