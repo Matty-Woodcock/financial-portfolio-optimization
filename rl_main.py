@@ -1,5 +1,5 @@
 from rl_env import PortfolioEnv
-from rl_reward import RewardFunction, PureReturn
+from rl_reward import RewardFunction
 from price_data_reader_writer import load_or_update_price_data
 
 from stable_baselines3.common.callbacks import EvalCallback

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from rl_main import train_and_test_one_policy
-from rl_reward import PureReturn, LogReturn
+from rl_reward import PureReturn, LogReturn, HighHHI
 from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH
 
 def extract_aggregates(policy_metric_summaries):
@@ -11,6 +11,19 @@ def extract_aggregates(policy_metric_summaries):
         policy_metric_summaries["hhi"].aggregate,
         policy_metric_summaries["mdd"].aggregate
     ]
+
+def rolling_volatility_calculator(portfolio_values, window_size=20):
+    portfolio_values = np.array(portfolio_values)
+    portfolio_returns = portfolio_values[1:] / portfolio_values[:-1] - 1
+
+    rolling_volatility = np.full(len(portfolio_values), np.nan)
+    for i in range(window_size, len(portfolio_values)):
+        rolling_volatility[i] = np.std(portfolio_returns[i - window_size:i], ddof=1)
+    
+    rolling_volatility_annual = np.array(rolling_volatility) * np.sqrt(252)
+    return rolling_volatility_annual
+
+    #TO DO: Implement with Pandas?
 
 def moo(all_policy_metrics, directions): #TO DO: What to do when metrics are almost identical?
     all_non_dominated_policy_indices = []
@@ -52,7 +65,8 @@ def main():
     all_policy_metric_summaries = []
     all_policy_metric_aggregates = []
     
-    reward_functions = [PureReturn(), LogReturn()]
+    reward_functions = [PureReturn(), LogReturn(), HighHHI()]
+    #reward_functions = [HighHHI()]
 
     for i in range(5):
         for reward_function in reward_functions:
@@ -76,7 +90,7 @@ def main():
 
     #Experimental Plotting
 
-    cmap = plt.get_cmap("tab10")
+    cmap = plt.get_cmap("tab20")
     COLOR_MAP = {symbol: cmap(i) for i, symbol in enumerate(ALL_SYMBOLS_WITH_CASH)}
 
     for policy_metric_summaries in pareto_front_policy_metric_summaries:
@@ -102,12 +116,23 @@ def main():
             label="HHI",
             alpha=0.8
         )
+        rolling_volatility = rolling_volatility_calculator(policy_metric_summaries["portfolio_value"].series)
+        #print(len(rolling_volatility), len(policy_metric_summaries["portfolio_value"].series), len(policy_metric_summaries["hhi"].series))
+        # print(rolling_volatility)
+        assert len(rolling_volatility) == len(policy_metric_summaries["portfolio_value"].series) == len(policy_metric_summaries["hhi"].series)
+        ax2.plot(
+            rolling_volatility,
+            linestyle="--",
+            label="Rolling Volatility",
+            alpha=0.8,
+            color="r"
+        )
 
         ax1.set_xlabel("Time")
-        ax1.set_ylabel("Portfolio Value (Solid)")
-        ax2.set_ylabel("HHI (Dotted)")
-        plt.title(f"Return = {policy_metric_summaries['portfolio_value'].aggregate}, Reward Function = {policy_metric_summaries['portfolio_value'].reward_function_name}")
-
+        ax1.set_ylabel("Portfolio Value (Blue)")
+        ax2.set_ylabel("HHI (Dotted) & Rolling Annualised Volatility (Red)")
+        plt.title(f"Return = {policy_metric_summaries['portfolio_value'].aggregate}, Sharpe Ratio = {policy_metric_summaries['sharpe_ratio'].aggregate}, Reward Function = {policy_metric_summaries['portfolio_value'].reward_function_name}")
+ 
         #Portfolio Weights
 
         weights = np.vstack(policy_metric_summaries["portfolio_weights"].series)
@@ -158,9 +183,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-#TO DO:
-#0. Fix graph colours
-#1. Baselines - Done?
-#2. Visualisation - Expand
-#3. Different Reward Functions
-#4. Risk
+#TO DO
+#1. Different Reward Functions - Risk Included?
+#2. Risk
+#3. Variance in Returns, Sharpe Ratio?

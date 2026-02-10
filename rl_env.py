@@ -3,7 +3,7 @@ from gymnasium import spaces
 import numpy as np
 import pandas as pd
 
-from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric
+from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric, calculate_sharpe_ratio
 from rl_reward import RewardFunction
 from config.constants import ALL_SYMBOLS_WITH_CASH
 
@@ -53,6 +53,7 @@ class PortfolioEnv(gym.Env):
         self.weights, self.portfolio_value = None, None
         self.weights_history = []
         self.portfolio_value_history = []
+        self.portfolio_return_history = []
 
     def _softmax(self, x, temp=0.05):
         z = x / temp
@@ -107,8 +108,8 @@ class PortfolioEnv(gym.Env):
             cost=self.cost,
         )
 
-        # deprecated_reward = (self.portfolio_value - portfolio_value_before_step) / portfolio_value_before_step
-        # assert deprecated_reward == reward
+        portfolio_return = (self.portfolio_value - portfolio_value_before_step) / portfolio_value_before_step
+        # assert portfolio_return == reward
 
         self.current_step += 1
         done = self.current_step >= len(self.prices)
@@ -120,6 +121,7 @@ class PortfolioEnv(gym.Env):
 
         self.weights_history.append(self.weights)
         self.portfolio_value_history.append(self.portfolio_value)
+        self.portfolio_return_history.append(portfolio_return)
 
         return obs, reward, done, False, info
     
@@ -181,5 +183,12 @@ class PortfolioEnv(gym.Env):
                 direction = None,
                 series = self.prices,
                 aggregate = None
+            ),
+            "sharpe_ratio": MetricSummary(
+                name = "Sharpe Ratio",
+                reward_function_name = self.reward_function.__class__.__name__,
+                direction = None,
+                series = None,
+                aggregate = calculate_sharpe_ratio(self.portfolio_return_history)
             )
         }

@@ -13,3 +13,8 @@ class LogReturn(RewardFunction):
     def __call__(self, portfolio_value_before, portfolio_value_after, **kwargs):
         log_return = np.log(portfolio_value_after / (portfolio_value_before))
         return log_return
+    
+class HighHHI(RewardFunction):
+    def __call__(self, portfolio_value_before, portfolio_value_after, weights, alpha = 0.15, **kwargs):
+        pure_return = (portfolio_value_after - portfolio_value_before) / portfolio_value_before
+        return pure_return + alpha * np.sum(np.square(weights))

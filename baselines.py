@@ -1,6 +1,7 @@
 import numpy as np
 
 from price_data_reader_writer import load_or_update_price_data
+from config.constants import ALL_SYMBOLS_WITH_CASH
 
 def main():
     try:
@@ -17,7 +18,7 @@ def main():
 
     #Choose portfolio weights for baseline
     #["CASH", "AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ", "TLT", "GLD"]
-    baseline_weights = [1/9] * 9
+    baseline_weights = [1/len(ALL_SYMBOLS_WITH_CASH)] * len(ALL_SYMBOLS_WITH_CASH)
     #baseline_weights = [0, 0, 0, 0, 0, 1, 0, 0, 0]
 
     asset_returns = test_df_excluding_window.pct_change().dropna()

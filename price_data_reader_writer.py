@@ -24,5 +24,5 @@ def load_or_update_price_data(force_refresh=False):
     return prices_df
 
 if __name__ == "__main__":
-    prices = load_or_update_price_data()
+    prices = load_or_update_price_data(force_refresh=True)
     print(prices.head())

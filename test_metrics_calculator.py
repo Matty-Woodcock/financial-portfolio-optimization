@@ -33,6 +33,20 @@ def calculate_mdd_metric(portfolio_value_history): #TO DO: Implement Vectorizati
     #plot_metric(mdd_history) #TO DO: Remove this testing
     return mdd_history, min(mdd_history)
 
+def calculate_sharpe_ratio(portfolio_return_history):
+    returns = np.array(portfolio_return_history)
+
+    rf_annual = 0.03
+    trading_days = 252
+
+    rf_daily = (1 + rf_annual)**(1 / trading_days) - 1
+    excess = returns - rf_daily
+
+    sharpe_ratio = (excess.mean()/ excess.std(ddof=1)) * np.sqrt(len(excess))
+
+    return sharpe_ratio
+
+
 # def plot_metric(y):
 #     y = np.asarray(y)
 #     x = np.arange(len(y))

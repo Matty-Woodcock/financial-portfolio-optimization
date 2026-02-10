@@ -51,5 +51,6 @@ if __name__ == "__main__":
 #240 Weeks: 2020/06/01 - 2025-01-06
 
 #Plan
+#1. Fix colours
 #2. More data?
 #3. Save historic price data
