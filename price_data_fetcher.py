@@ -6,14 +6,12 @@ import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-from config.constants import ALL_SYMBOLS
+from config.constants import ALL_SYMBOLS, GARCH_BURN_IN_DAYS
 
 load_dotenv()
 API_KEY = os.getenv("TIINGO_API_KEY")
 
-def fetch_tiingo_price_data_for_symbol(symbol, start_date_dt, num_weeks = 8):
-    interval = timedelta(weeks=num_weeks)
-    end_date_dt = start_date_dt + interval
+def fetch_tiingo_price_data_for_symbol(symbol, start_date_dt, end_date_dt):
     start_date_str = start_date_dt.strftime("%Y-%m-%d")
     end_date_str = end_date_dt.strftime("%Y-%m-%d")
 
@@ -36,21 +34,28 @@ def fetch_tiingo_price_data_for_symbol(symbol, start_date_dt, num_weeks = 8):
     
 
 def fetch_tiingo_price_data_for_all_symbols():
-    start_date = datetime(2018, 6, 1)
+    burn_in_start_date = datetime(2017, 6, 2)
+    #rl_start_date = datetime(2018, 6, 1)
+    end_date = datetime(2024, 12, 6)
+    #ALL_SYMBOLS = ["AAPL"]
 
     try:
-        price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, start_date, 340) for symbol in ALL_SYMBOLS}, axis=1)
+        price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, burn_in_start_date, end_date) for symbol in ALL_SYMBOLS}, axis=1)
     except ValueError as error:
         raise error
     
-    return price_df #TO DO: Change to prices_df
+    assert len(price_df) - 1641 == GARCH_BURN_IN_DAYS
+    
+    return price_df
 
 if __name__ == "__main__":
-    print(fetch_tiingo_price_data_for_all_symbols())
+    price_df = fetch_tiingo_price_data_for_all_symbols()
+    print(price_df)
 
-#240 Weeks: 2020/06/01 - 2025-01-06
+#Original Dates: 2018-06-01 & 2024-12-06
+#Original Length: 1641 Trading Days
 
-#Plan
-#1. Fix colours
-#2. More data?
-#3. Save historic price data
+#New Dates: 2017-06-02 & 2024-12-06
+#New Length: 1892 Trading Days
+
+#There are approximately 252 trading days in a year!

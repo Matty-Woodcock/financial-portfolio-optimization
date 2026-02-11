@@ -5,6 +5,7 @@ import pandas as pd
 
 from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric, calculate_sharpe_ratio
 from rl_reward import RewardFunction
+from garch_main import GARCHVolatilityModel
 from config.constants import ALL_SYMBOLS_WITH_CASH
 
 def format_weights(tickers, weights):
@@ -17,10 +18,11 @@ def format_weights(tickers, weights):
 class PortfolioEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, prices: pd.DataFrame, reward_function: RewardFunction, window_size=40, transaction_cost = 0.001):
+    def __init__(self, prices: pd.DataFrame, reward_function: RewardFunction, burn_in_returns, window_size=40, transaction_cost = 0.001):
         super(PortfolioEnv, self).__init__()
 
         self.reward_function = reward_function
+        self.burn_in_returns = burn_in_returns
 
         self.prices = prices.values  # shape (T, 2)
         self.dates = prices.index
@@ -29,7 +31,6 @@ class PortfolioEnv(gym.Env):
         self.current_step = window_size
         self.transaction_cost = transaction_cost
 
-        #TO DO: Should I treat cash as static?
         self.n_assets = self.prices.shape[1] + 1
 
         self.action_space = spaces.Box(
@@ -38,22 +39,18 @@ class PortfolioEnv(gym.Env):
             shape=(self.n_assets,), 
             dtype=np.float32
         )
-        # self.action_space = spaces.Box(
-        #     low=0.0,
-        #     high=1.0,
-        #     shape=(self.n_assets,), 
-        #     dtype=np.float32
-        # )
 
         # Observation: normalized prices for both assets over past N weeks
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(window_size * (self.n_assets - 1),), dtype=np.float32
+            low=-np.inf, high=np.inf, shape=(window_size * (self.n_assets - 1) + 1,), dtype=np.float32 #TO DO: Needs to be changed
         )
 
         self.weights, self.portfolio_value = None, None
         self.weights_history = []
         self.portfolio_value_history = []
         self.portfolio_return_history = []
+
+        #self.x = "First" #TO DO: Remove
 
     def _softmax(self, x, temp=0.05):
         z = x / temp
@@ -65,7 +62,22 @@ class PortfolioEnv(gym.Env):
         # print(self.current_step - self.window_size, self.current_step)
         # print(len(window))
         norm = window / (window[0] + 1e-8) - 1.0
-        return norm.flatten().astype(np.float32)    
+
+        volatility = np.array([self.garch_model.forecast_volatility()])
+        observation = np.concatenate([norm.flatten(), volatility])
+
+        # print(observation)
+        # print(self.garch_model.total_steps, volatility)
+        
+        # if self.garch_model.total_steps == 290:
+        #     print(self.x)
+        #     print(self.garch_model.total_steps, volatility)
+        #     print(len(self.prices))
+        #     input("X")
+        # else:
+        #     self.x = self.garch_model.total_steps
+
+        return observation.astype(np.float32)    
     
     def step(self, action):
         #TO DO: Is sparsemax worth pursuing?
@@ -93,8 +105,11 @@ class PortfolioEnv(gym.Env):
         #asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
         asset_returns = (current_prices - prev_prices) / prev_prices
         asset_returns_with_cash = np.append(0, asset_returns)
+        # print(asset_returns)
+        # print(prev_prices)
+        # print(current_prices)
 
-        # self.one, self.two, self.three = prev_prices, current_prices, asset_returns
+        self.garch_model.add_return(asset_returns[0])
 
         portfolio_return = np.dot(new_weights, asset_returns_with_cash)
         self.portfolio_value = portfolio_value_after_cost * (1 + portfolio_return)
@@ -125,12 +140,16 @@ class PortfolioEnv(gym.Env):
 
         return obs, reward, done, False, info
     
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options=None): #TO DO: Experiment with how often this is called
         super().reset(seed=seed)
         self.current_step = self.window_size
         self.portfolio_value = 1.0
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
+
+        self.garch_model = GARCHVolatilityModel(window_size=250) #TO DO: Maybe make more efficent?
+        for asset_returns in self.burn_in_returns:
+            self.garch_model.add_return(asset_returns[0])
 
         obs = self._get_observation()
         info = {}
@@ -138,9 +157,7 @@ class PortfolioEnv(gym.Env):
 
     def render(self):
         current_date_str = self.dates[self.current_step - 1].strftime('%Y-%m-%d')
-        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)} {self.current_step - 2}") 
-        # print(self.one, self.two, self.three)
-        # input("xxx")   
+        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)} {self.current_step - 2}")
 
     def get_metric_summaries(self) -> dict[str, MetricSummary]:
         #return [self.portfolio_value, calculate_hhi_metric(self.weights_history), calculate_mdd_metric(self.portfolio_value_history)]
