@@ -1,5 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
+
+from datetime import datetime
 
 from rl_main import train_and_test_one_policy
 from rl_reward import PureReturn, LogReturn, HighHHI
@@ -11,6 +14,12 @@ def extract_aggregates(policy_metric_summaries):
         policy_metric_summaries["hhi"].aggregate,
         policy_metric_summaries["mdd"].aggregate
     ]
+    # return [
+    #         round(policy_metric_summaries["portfolio_value"].aggregate, 4),
+    #         round(policy_metric_summaries["hhi"].aggregate, 4),
+    #         round(policy_metric_summaries["mdd"].aggregate, 4)
+    #     ]
+
 
 def rolling_volatility_calculator(portfolio_values, window_size=20):
     portfolio_values = np.array(portfolio_values)
@@ -27,6 +36,7 @@ def rolling_volatility_calculator(portfolio_values, window_size=20):
 
 def moo(all_policy_metrics, directions): #TO DO: What to do when metrics are almost identical?
     all_non_dominated_policy_indices = []
+    epsilion = 0.005
 
     for i, policy_a in enumerate(all_policy_metrics):
         policy_a_dominated = False
@@ -39,16 +49,16 @@ def moo(all_policy_metrics, directions): #TO DO: What to do when metrics are alm
 
             for k, d in enumerate(directions):
                 if d == 1: #Maximised metrics
-                    if policy_a[k] > policy_b[k]:
+                    if policy_a[k] > policy_b[k] + epsilion:
                         policy_b_no_worse = False
                         break
-                    if policy_a[k] < policy_b[k]:
+                    if policy_a[k] + epsilion < policy_b[k]:
                         policy_b_strictly_better = True
                 elif d == -1: #Minimised metrics
-                    if policy_a[k] < policy_b[k]:
+                    if policy_a[k] < policy_b[k] - epsilion:
                         policy_b_no_worse = False
                         break
-                    if policy_a[k] > policy_b[k]:
+                    if policy_a[k] - epsilion > policy_b[k]:
                         policy_b_strictly_better = True
 
             if policy_b_no_worse and policy_b_strictly_better:
@@ -68,7 +78,7 @@ def main():
     reward_functions = [PureReturn(), LogReturn(), HighHHI()]
     #reward_functions = [HighHHI()]
 
-    for i in range(5):
+    for i in range(2):
         for reward_function in reward_functions:
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
@@ -92,6 +102,12 @@ def main():
 
     cmap = plt.get_cmap("tab20")
     COLOR_MAP = {symbol: cmap(i) for i, symbol in enumerate(ALL_SYMBOLS_WITH_CASH)}
+
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    OUTPUT_DIR = os.path.join("results", timestamp)
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    pareto_front_counter = 0
 
     for policy_metric_summaries in pareto_front_policy_metric_summaries:
         fig, axes = plt.subplots(
@@ -131,7 +147,10 @@ def main():
         ax1.set_xlabel("Time")
         ax1.set_ylabel("Portfolio Value (Blue)")
         ax2.set_ylabel("HHI (Dotted) & Rolling Annualised Volatility (Red)")
-        plt.title(f"Return = {policy_metric_summaries['portfolio_value'].aggregate}, Sharpe Ratio = {policy_metric_summaries['sharpe_ratio'].aggregate}, Reward Function = {policy_metric_summaries['portfolio_value'].reward_function_name}")
+
+        rounded_return = round(policy_metric_summaries['portfolio_value'].aggregate, 3)
+        rounded_sharpe_ratio = round(policy_metric_summaries['sharpe_ratio'].aggregate, 3)
+        plt.title(f"Return = {rounded_return}, Sharpe Ratio = {rounded_sharpe_ratio}, Reward Function = {policy_metric_summaries['portfolio_value'].reward_function_name}")
  
         #Portfolio Weights
 
@@ -178,12 +197,18 @@ def main():
         )
 
         plt.tight_layout()
+
+        filename = f"sharpe_{policy_metric_summaries['sharpe_ratio'].aggregate:.2f}_{pareto_front_counter}.png"
+        filepath = os.path.join(OUTPUT_DIR, filename)
+
+        plt.savefig(filepath, dpi=300, bbox_inches="tight")
         plt.show()
+
+        pareto_front_counter += 1
 
 if __name__ == "__main__":
     main()
 
 #TO DO
-#1. Different Reward Functions - Risk Included?
-#2. Risk
-#3. Variance in Returns, Sharpe Ratio?
+#1. DCC-GARCH
+
