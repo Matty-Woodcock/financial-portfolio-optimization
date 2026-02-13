@@ -42,7 +42,7 @@ class PortfolioEnv(gym.Env):
 
         # Observation: normalized prices for both assets over past N weeks
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=((window_size + 1) * (self.n_assets - 1),), dtype=np.float32 #TO DO: Needs to be changed
+            low=-np.inf, high=np.inf, shape=((window_size) * (self.n_assets - 1),), dtype=np.float32 #TO DO: Needs to be changed
         )
 
         self.weights, self.portfolio_value = None, None
@@ -63,9 +63,10 @@ class PortfolioEnv(gym.Env):
         # print(len(window))
         norm = window / (window[0] + 1e-8) - 1.0
 
-        volatilities = self.multi_asset_garch.forecast_volatilities()
-        observation = np.concatenate([norm.flatten(), volatilities])
+        # volatilities = self.multi_asset_garch.forecast_volatilities()
+        # observation = np.concatenate([norm.flatten(), volatilities])
 
+        observation = norm.flatten()
         # print(observation)
         # print(self.garch_model.total_steps, volatility)
         
@@ -151,8 +152,8 @@ class PortfolioEnv(gym.Env):
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
 
-        if hasattr(self, "multi_asset_garch"):
-            self.garch_average_runtimes.append(self.multi_asset_garch.total_runtime / self.multi_asset_garch.total_calls)
+        # if hasattr(self, "multi_asset_garch"):
+        #     self.garch_average_runtimes.append(self.multi_asset_garch.total_runtime / self.multi_asset_garch.total_calls)
 
         self.multi_asset_garch = MultiAssetGARCH(self.n_assets - 1) #TO DO: Maybe make more efficent?
         for asset_returns in self.burn_in_returns:
