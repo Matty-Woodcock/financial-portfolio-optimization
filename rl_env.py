@@ -40,8 +40,12 @@ class PortfolioEnv(gym.Env):
         )
 
         # Observation: normalized prices for both assets over past N weeks
+        if self.reward_function.volatility_in_observation_space:
+            observation_space_shape = (window_size + 1) * (self.n_assets - 1)
+        else:
+            observation_space_shape = (window_size) * (self.n_assets - 1)
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=((window_size) * (self.n_assets - 1),), dtype=np.float32 #TO DO: Needs to be changed
+            low=-np.inf, high=np.inf, shape=(observation_space_shape,), dtype=np.float32
         )
 
         self.weights, self.portfolio_value = None, None
@@ -62,35 +66,11 @@ class PortfolioEnv(gym.Env):
         # print(len(window))
         norm = window / (window[0] + 1e-8) - 1.0
 
-        #daily_volatilities = self.volatilities[self.current_step - self.window_size]
-        #daily_volatilities = np.array([1])
-        #observation = np.concatenate([norm.flatten(), daily_volatilities])
-        observation = norm.flatten()
-        self.test_counter += 1
-        if self.test_counter == 1:
-            print(len(window))
-            print(self.current_step)
-            input("Z")
-
-        if self.test_counter == 1109:
-            print(len(self.prices))
-            print(self.current_step)
-            input("Y")
-
-        # print(observation)
-        # print(self.garch_model.total_steps, volatility)
-        
-        # if self.garch_model.total_steps == 290:
-        #     print(self.x)
-        #     print(self.garch_model.total_steps, volatility)
-        #     print(len(self.prices))
-        #     input("X")
-        # else:
-        #     self.x = self.garch_model.total_steps
-
-        # print(observation)
-        # print(volatilities)
-        # input("X")
+        if self.reward_function.volatility_in_observation_space:
+            daily_volatilities = self.volatilities[self.current_step - self.window_size]
+            observation = np.concatenate([norm.flatten(), daily_volatilities])
+        else:
+            observation = norm.flatten()
 
         return observation.astype(np.float32)    
     
@@ -141,8 +121,7 @@ class PortfolioEnv(gym.Env):
 
         self.current_step += 1
         done = self.current_step >= len(self.prices)
-
-        obs = self._get_observation()
+        
         info = {"portfolio_value": self.portfolio_value, "weights": new_weights}
 
         self.weights = new_weights
@@ -150,6 +129,11 @@ class PortfolioEnv(gym.Env):
         self.weights_history.append(self.weights)
         self.portfolio_value_history.append(self.portfolio_value)
         self.portfolio_return_history.append(portfolio_return)
+
+        if not done:
+            obs = self._get_observation()
+        else:
+            obs = None
 
         return obs, reward, done, False, info
     
@@ -159,8 +143,8 @@ class PortfolioEnv(gym.Env):
         self.portfolio_value = 1.0
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
-        print(self.test_counter)
-        input("X")
+        # print(self.test_counter)
+        # input("X")
         self.test_counter = 0
         obs = self._get_observation()
         info = {}

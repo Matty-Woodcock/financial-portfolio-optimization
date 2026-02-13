@@ -1,6 +1,9 @@
 import numpy as np
 
 class RewardFunction:
+    def __init__(self, volatility_in_observation_space = False):
+        self.volatility_in_observation_space = volatility_in_observation_space
+        
     def __call__(self, **kwargs):
         raise NotImplementedError
     

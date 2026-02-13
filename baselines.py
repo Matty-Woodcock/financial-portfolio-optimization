@@ -10,7 +10,7 @@ def main():
         print(f"Fetching Price Data Failed: {error}")
         return
 
-    burn_in_split_index = GARCH_BURN_IN_DAYS
+    burn_in_split_index = GARCH_BURN_IN_DAYS + 1 #Prices Length = Returns Length + 1
     eval_split_index = int(len(prices_df[burn_in_split_index:]) * 0.85) + burn_in_split_index
     
     test_df = prices_df.iloc[eval_split_index:]
