@@ -75,10 +75,10 @@ def main():
     all_policy_metric_summaries = []
     all_policy_metric_aggregates = []
     
-    reward_functions = [PureReturn(), LogReturn(), HighHHI()]
-    #reward_functions = [HighHHI()]
+    #reward_functions = [PureReturn(), LogReturn(), HighHHI()]
+    reward_functions = [PureReturn()]
 
-    for i in range(2):
+    for i in range(1):
         for reward_function in reward_functions:
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)

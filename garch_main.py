@@ -46,6 +46,9 @@ class MultiAssetGARCH:
         self.n_assets = n_assets
         self.models = [GARCHVolatilityModel() for _ in range(n_assets)]
 
+        self.total_runtime = 0
+        self.total_calls = 0
+
     def add_returns(self, asset_returns):
         for i in range(self.n_assets):
             self.models[i].add_return(asset_returns[i])
@@ -57,5 +60,7 @@ class MultiAssetGARCH:
             volatilities.append(model.forecast_volatility())
         end_time = time.time()
         multi_asset_garch_forecast_time = end_time - start_time
-        input(f"Multi-Asset GARCH Forecast Time: {multi_asset_garch_forecast_time:.4f} Seconds")
+        self.total_runtime += multi_asset_garch_forecast_time
+        self.total_calls += 1
+        #input(f"Multi-Asset GARCH Forecast Time: {multi_asset_garch_forecast_time:.4f} Seconds")
         return np.array(volatilities)

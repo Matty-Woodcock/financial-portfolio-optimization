@@ -55,6 +55,9 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
     print("Training Starting")
     model.learn(total_timesteps=8000, callback=callback)
     print("Training Complete")
+    
+    print(f"Training GARCH Average Runtimes: {train_env.garch_average_runtimes}")
+    print(f"Evaluation GARCH Average Runtimes: {eval_env.garch_average_runtimes}")
 
     print("\nLoading Best Model for Testing")
     best_model = PPO.load("./logs/best_model") #Automatically appends .zip

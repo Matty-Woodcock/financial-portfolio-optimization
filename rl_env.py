@@ -50,7 +50,7 @@ class PortfolioEnv(gym.Env):
         self.portfolio_value_history = []
         self.portfolio_return_history = []
 
-        #self.x = "First" #TO DO: Remove
+        self.garch_average_runtimes = []
 
     def _softmax(self, x, temp=0.05):
         z = x / temp
@@ -150,6 +150,9 @@ class PortfolioEnv(gym.Env):
         self.portfolio_value = 1.0
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
+
+        if hasattr(self, "multi_asset_garch"):
+            self.garch_average_runtimes.append(self.multi_asset_garch.total_runtime / self.multi_asset_garch.total_calls)
 
         self.multi_asset_garch = MultiAssetGARCH(self.n_assets - 1) #TO DO: Maybe make more efficent?
         for asset_returns in self.burn_in_returns:
