@@ -202,5 +202,12 @@ class PortfolioEnv(gym.Env):
                 direction = None,
                 series = None,
                 aggregate = calculate_sharpe_ratio(self.portfolio_return_history)
-            )
+            ),
+            "garch_volatility": MetricSummary(
+                name = self.reward_function.volatility_in_observation_space,
+                reward_function_name = self.reward_function.__class__.__name__,
+                direction = None,
+                series = None,
+                aggregate = None
+            ),
         }

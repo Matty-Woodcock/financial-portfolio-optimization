@@ -153,7 +153,7 @@ def main():
 
         rounded_return = round(policy_metric_summaries['portfolio_value'].aggregate, 3)
         rounded_sharpe_ratio = round(policy_metric_summaries['sharpe_ratio'].aggregate, 3)
-        plt.title(f"Return = {rounded_return}, Sharpe Ratio = {rounded_sharpe_ratio}, Reward Function = {policy_metric_summaries['portfolio_value'].reward_function_name}")
+        plt.title(f"Return = {rounded_return}, Sharpe Ratio = {rounded_sharpe_ratio}, Reward Function = {policy_metric_summaries['portfolio_value'].reward_function_name}, GARCH Volatility = {policy_metric_summaries['garch_volatility'].name}")
  
         #Portfolio Weights
 
