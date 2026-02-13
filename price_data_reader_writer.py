@@ -1,7 +1,9 @@
 import os
 import pandas as pd
 from datetime import datetime
+
 from price_data_fetcher import fetch_tiingo_price_data_for_all_symbols
+from volatility_calculator import volatility_calculator
 
 CSV_FILE = "price_data.csv"
 
@@ -21,8 +23,11 @@ def load_or_update_price_data(force_refresh=False):
         if prices_df is not None:
             prices_df.to_csv(CSV_FILE)
             print(f"Price Data Saved To CSV")
-    return prices_df
+
+    train_volatilities, eval_volatilities, test_volatilities = volatility_calculator(prices_df)
+
+    return prices_df, train_volatilities, eval_volatilities, test_volatilities
 
 if __name__ == "__main__":
-    prices = load_or_update_price_data(force_refresh=True)
-    print(prices.head())
+    prices = load_or_update_price_data(force_refresh=False)
+    #print(prices.head())

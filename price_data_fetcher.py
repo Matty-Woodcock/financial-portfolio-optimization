@@ -44,7 +44,7 @@ def fetch_tiingo_price_data_for_all_symbols():
     except ValueError as error:
         raise error
     
-    assert len(price_df) - 1641 == GARCH_BURN_IN_DAYS
+    assert len(price_df) - 1642 == GARCH_BURN_IN_DAYS
     
     return price_df
 

@@ -8,13 +8,13 @@ from stable_baselines3 import PPO
 
 def train_and_test_one_policy(reward_function: RewardFunction, render=False):
     try:
-        prices_df = load_or_update_price_data()
+        prices_df, train_volatilities, eval_volatilities, test_volatilities = load_or_update_price_data()
     except ValueError as error:
         print(f"Fetching Price Data Failed: {error}")
         return
 
     #Indexing below confirmed to be correct
-    burn_in_split_index = GARCH_BURN_IN_DAYS
+    burn_in_split_index = GARCH_BURN_IN_DAYS + 1 #Prices Length = Returns Length + 1
     train_split_index = int(len(prices_df[burn_in_split_index:]) * 0.7) + burn_in_split_index
     eval_split_index = int(len(prices_df[burn_in_split_index:]) * 0.85) + burn_in_split_index
     
@@ -28,19 +28,9 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
     print(f"Evaluating on {len(eval_df)} days.") #246
     print(f"Testing on {len(test_df)} days.") #247
 
-    garch_window_size = GARCH_BURN_IN_DAYS + 40 - 1 #Subtract one from RL window size to account for returns rather than price
-    returns_df = prices_df.pct_change().dropna() #TO DO: Change later?
-
-    pre_train_returns = returns_df.iloc[:garch_window_size].values
-    # print(pre_train_returns.head())
-    # print(pre_train_returns.tail())
-    pre_eval_returns = returns_df.iloc[train_split_index - garch_window_size:train_split_index].values
-    pre_test_returns = returns_df.iloc[eval_split_index - garch_window_size:eval_split_index].values
-    assert len(pre_train_returns) == len(pre_eval_returns) == len(pre_test_returns) == 290
-
-    train_env = PortfolioEnv(train_df, reward_function, pre_train_returns)
-    eval_env = PortfolioEnv(eval_df, reward_function, pre_eval_returns)
-    test_env = PortfolioEnv(test_df, reward_function, pre_test_returns)
+    train_env = PortfolioEnv(train_df, reward_function, train_volatilities)
+    eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
+    test_env = PortfolioEnv(test_df, reward_function, test_volatilities)
 
     callback = EvalCallback(eval_env, 
                             best_model_save_path='./logs/',
@@ -56,8 +46,8 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
     model.learn(total_timesteps=8000, callback=callback)
     print("Training Complete")
     
-    print(f"Training GARCH Average Runtimes: {train_env.garch_average_runtimes}")
-    print(f"Evaluation GARCH Average Runtimes: {eval_env.garch_average_runtimes}")
+    # print(f"Training GARCH Total Runtimes: {train_env.garch_average_runtimes}")
+    # print(f"Evaluation GARCH Total Runtimes: {eval_env.garch_average_runtimes}")
 
     print("\nLoading Best Model for Testing")
     best_model = PPO.load("./logs/best_model") #Automatically appends .zip
