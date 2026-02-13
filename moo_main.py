@@ -78,7 +78,7 @@ def main():
     reward_functions = [PureReturn(), LogReturn(), HighHHI()]
     #reward_functions = [HighHHI()]
 
-    for i in range(1):
+    for i in range(2):
         for reward_function in reward_functions:
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
@@ -210,5 +210,7 @@ if __name__ == "__main__":
     main()
 
 #TO DO
-#1. DCC-GARCH
+#1. Speed up
+#2. Seperate MOO
+#3. DCC-GARCH?
 

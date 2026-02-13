@@ -1,18 +1,4 @@
-# from arch import arch_model
-
-# class GARCHVolatilityModel:
-#     def __init__(self, asset_returns):
-#         self.asset_returns = asset_returns
-
-#     def calculate_volatility(self):
-#         returns = asset_returns['AAPL']  # daily returns
-#         print(self.asset_returns["AAPL"])
-#         # model = arch_model(returns, vol='Garch', p=1, q=1, dist='normal')
-#         # res = model.fit(disp='off')
-
-#         # # Get conditional volatility (sigma_t)
-#         # sigma_t = res.conditional_volatility
-
+import time
 import numpy as np
 
 from collections import deque
@@ -54,3 +40,22 @@ class GARCHVolatilityModel:
         forecast = self.model_fit.forecast(horizon=1)
         self.last_forecast = np.sqrt(forecast.variance.values[-1, 0])
         return self.last_forecast / 100
+    
+class MultiAssetGARCH:
+    def __init__(self, n_assets):
+        self.n_assets = n_assets
+        self.models = [GARCHVolatilityModel() for _ in range(n_assets)]
+
+    def add_returns(self, asset_returns):
+        for i in range(self.n_assets):
+            self.models[i].add_return(asset_returns[i])
+
+    def forecast_volatilities(self):
+        volatilities = []
+        start_time = time.time()
+        for model in self.models:
+            volatilities.append(model.forecast_volatility())
+        end_time = time.time()
+        multi_asset_garch_forecast_time = end_time - start_time
+        input(f"Multi-Asset GARCH Forecast Time: {multi_asset_garch_forecast_time:.4f} Seconds")
+        return np.array(volatilities)

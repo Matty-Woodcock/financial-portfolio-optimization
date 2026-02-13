@@ -5,7 +5,7 @@ import pandas as pd
 
 from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric, calculate_sharpe_ratio
 from rl_reward import RewardFunction
-from garch_main import GARCHVolatilityModel
+from garch_main import MultiAssetGARCH
 from config.constants import ALL_SYMBOLS_WITH_CASH
 
 def format_weights(tickers, weights):
@@ -42,7 +42,7 @@ class PortfolioEnv(gym.Env):
 
         # Observation: normalized prices for both assets over past N weeks
         self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(window_size * (self.n_assets - 1) + 1,), dtype=np.float32 #TO DO: Needs to be changed
+            low=-np.inf, high=np.inf, shape=((window_size + 1) * (self.n_assets - 1),), dtype=np.float32 #TO DO: Needs to be changed
         )
 
         self.weights, self.portfolio_value = None, None
@@ -63,8 +63,8 @@ class PortfolioEnv(gym.Env):
         # print(len(window))
         norm = window / (window[0] + 1e-8) - 1.0
 
-        volatility = np.array([self.garch_model.forecast_volatility()])
-        observation = np.concatenate([norm.flatten(), volatility])
+        volatilities = self.multi_asset_garch.forecast_volatilities()
+        observation = np.concatenate([norm.flatten(), volatilities])
 
         # print(observation)
         # print(self.garch_model.total_steps, volatility)
@@ -76,6 +76,10 @@ class PortfolioEnv(gym.Env):
         #     input("X")
         # else:
         #     self.x = self.garch_model.total_steps
+
+        # print(observation)
+        # print(volatilities)
+        # input("X")
 
         return observation.astype(np.float32)    
     
@@ -109,7 +113,7 @@ class PortfolioEnv(gym.Env):
         # print(prev_prices)
         # print(current_prices)
 
-        self.garch_model.add_return(asset_returns[0])
+        self.multi_asset_garch.add_returns(asset_returns)
 
         portfolio_return = np.dot(new_weights, asset_returns_with_cash)
         self.portfolio_value = portfolio_value_after_cost * (1 + portfolio_return)
@@ -147,9 +151,9 @@ class PortfolioEnv(gym.Env):
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
 
-        self.garch_model = GARCHVolatilityModel(window_size=250) #TO DO: Maybe make more efficent?
+        self.multi_asset_garch = MultiAssetGARCH(self.n_assets - 1) #TO DO: Maybe make more efficent?
         for asset_returns in self.burn_in_returns:
-            self.garch_model.add_return(asset_returns[0])
+            self.multi_asset_garch.add_returns(asset_returns)
 
         obs = self._get_observation()
         info = {}
