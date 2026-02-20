@@ -49,11 +49,7 @@ class PortfolioEnv(gym.Env):
         )
 
         self.weights, self.portfolio_value = None, None
-        self.weights_history = []
-        self.portfolio_value_history = []
-        self.portfolio_return_history = []
-        self.transaction_cost_percentage_history = []
-
+    
         self.test_counter = 0
 
     def _softmax(self, x, temp=0.05):
@@ -147,8 +143,12 @@ class PortfolioEnv(gym.Env):
         self.portfolio_value = 1.0
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
-        # print(self.test_counter)
-        # input("X")
+        
+        self.weights_history = []
+        self.portfolio_value_history = []
+        self.portfolio_return_history = []
+        self.transaction_cost_percentage_history = []
+
         self.test_counter = 0
         obs = self._get_observation()
         info = {}
