@@ -22,8 +22,8 @@ class PortfolioNSGA2Problem(ElementwiseProblem):
 
         metrics = self.env.get_metric_summaries()
 
-        sharpe = metrics["sharpe_ratio"].aggregate
-        transaction_cost = metrics["transaction_cost_percentage"].aggregate
+        objective_one = metrics["portfolio_value"].aggregate
+        objective_two = metrics["mdd"].aggregate
 
         #pymoo tries to minimised by default
-        out["F"] = [-sharpe, transaction_cost]
+        out["F"] = [-objective_one, -objective_two]

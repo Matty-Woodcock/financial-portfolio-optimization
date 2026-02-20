@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 
 from rl_main import train_and_test_one_policy
+from ngsa2_main import train_and_test_one_ngsa2
 from rl_reward import PureReturn, LogReturn, HighHHI
 from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH
 
@@ -79,18 +80,23 @@ def main():
                         # PureReturn(volatility_in_observation_space=True),
                         # LogReturn(volatility_in_observation_space=True),
                         # HighHHI(volatility_in_observation_space=True),]
-    reward_functions = [PureReturn()]
+    reward_functions = []
 
     for i in range(1):
         for reward_function in reward_functions:
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
+        ngsa2_metric_summaries = train_and_test_one_ngsa2(PureReturn())
+        all_policy_metric_summaries.append(ngsa2_metric_summaries)
+        # print(ngsa2_metric_summaries)
+        # input("X")
+        all_policy_metric_aggregates.append(extract_aggregates(ngsa2_metric_summaries))
         
     directions = [
-        policy_metric_summaries["portfolio_value"].direction,
-        policy_metric_summaries["hhi"].direction,
-        policy_metric_summaries["mdd"].direction
+        all_policy_metric_summaries[0]["portfolio_value"].direction,
+        all_policy_metric_summaries[0]["hhi"].direction,
+        all_policy_metric_summaries[0]["mdd"].direction
     ]
 
     print(all_policy_metric_aggregates)

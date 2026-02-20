@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
@@ -23,6 +24,17 @@ def run_nsga(env, pop_size=80, n_gen=50):
     )
 
     return res
+
+def plot_pareto_front(objective_one, objective_two):
+    plt.figure(figsize=(8,6))
+    plt.scatter(objective_one, objective_two, c='blue', label='Pareto Solutions')
+    plt.xlabel("Objective One")
+    plt.ylabel("Objective Two")
+    plt.title("Pareto Front")
+    plt.grid(True)
+
+    plt.legend()
+    plt.show()
 
 def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
     try:
@@ -50,23 +62,37 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
     eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
     test_env = PortfolioEnv(test_df, reward_function, test_volatilities)
     
-    res = run_nsga(test_env) #This is a result object
+    #Training
+
+    res = run_nsga(eval_env) #This is a result object
 
     pareto_actions = res.X
     pareto_objectives = res.F
+    
+    objective_one = pareto_objectives[:, 0]
+    objective_two = pareto_objectives[:, 1]
+    sign_correct_objective_one = -objective_one
+    sign_correct_objective_two = -objective_two
 
-    # Choose highest Sharpe solution
-    best_index = np.argmin(pareto_objectives[:, 0])
+    #Choose highest Sharpe solution
+    best_index = np.argmin(objective_one)
     best_action = pareto_actions[best_index]
+
+    print(pareto_objectives[best_index])
+
+    plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
+
+    #Testing
 
     obs, _ = test_env.reset()
     done = False
 
     while not done:
-        obs, reward, done, _, info = test_env.step(best_action)
+        obs, _, done, _, info = test_env.step(best_action)
 
-    metric_summaries = test_env.get_metric_summaries()
-    print(metric_summaries["sharpe_ratio"].aggregate, len(metric_summaries["portfolio_value"].series))
+    ngsa2_metric_summaries = test_env.get_metric_summaries()
+    #print(ngsa2_metric_summaries["portfolio_value"].aggregate, len(ngsa2_metric_summaries["portfolio_value"].series))
+    return ngsa2_metric_summaries
 
 if __name__ == "__main__":
     train_and_test_one_ngsa2(PureReturn(), render=False)
