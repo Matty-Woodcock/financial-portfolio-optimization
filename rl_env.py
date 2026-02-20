@@ -52,6 +52,7 @@ class PortfolioEnv(gym.Env):
         self.weights_history = []
         self.portfolio_value_history = []
         self.portfolio_return_history = []
+        self.transaction_cost_percentage_history = []
 
         self.test_counter = 0
 
@@ -91,6 +92,8 @@ class PortfolioEnv(gym.Env):
         
         #TO DO: Rewrite this functionality better
         portfolio_value_after_cost = self.portfolio_value - self.cost
+        #transaction_cost_percentage = (self.cost / self.portfolio_value) * 100
+        transaction_cost_percentage = self.cost * 100
 
         #Below can potentially be changed as we already calculated portfolio returns? But probably not.
         prev_prices = self.prices[self.current_step - 1]
@@ -129,6 +132,7 @@ class PortfolioEnv(gym.Env):
         self.weights_history.append(self.weights)
         self.portfolio_value_history.append(self.portfolio_value)
         self.portfolio_return_history.append(portfolio_return)
+        self.transaction_cost_percentage_history.append(transaction_cost_percentage)
 
         if not done:
             obs = self._get_observation()
@@ -209,5 +213,12 @@ class PortfolioEnv(gym.Env):
                 direction = None,
                 series = None,
                 aggregate = None
+            ),
+            "transaction_cost_percentage": MetricSummary(
+                name = "Total Transaction Cost Percentage",
+                reward_function_name = self.reward_function.__class__.__name__,
+                direction = None,
+                series = self.transaction_cost_percentage_history,
+                aggregate = np.sum(self.transaction_cost_percentage_history)
             ),
         }

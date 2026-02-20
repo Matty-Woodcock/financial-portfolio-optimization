@@ -75,13 +75,13 @@ def main():
     all_policy_metric_summaries = []
     all_policy_metric_aggregates = []
     
-    reward_functions = [PureReturn(), LogReturn(), HighHHI(),
-                        PureReturn(volatility_in_observation_space=True),
-                        LogReturn(volatility_in_observation_space=True),
-                        HighHHI(volatility_in_observation_space=True),]
-    #reward_functions = [PureReturn()]
+    #reward_functions = [PureReturn(), LogReturn(), HighHHI(),
+                        # PureReturn(volatility_in_observation_space=True),
+                        # LogReturn(volatility_in_observation_space=True),
+                        # HighHHI(volatility_in_observation_space=True),]
+    reward_functions = [PureReturn()]
 
-    for i in range(2):
+    for i in range(1):
         for reward_function in reward_functions:
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
@@ -172,7 +172,8 @@ def main():
 
         ax_w.set_ylabel("Weight")
         ax_w.set_xlabel("Days")
-        ax_w.set_title("Portfolio Weights Over Time")
+        #TO DO: Are signficant figures possible below?
+        ax_w.set_title(f"Portfolio Weights Over Time (Total Transaction Cost Percentage Relative To Initial Capital = {policy_metric_summaries['transaction_cost_percentage'].aggregate:.3f}%)")
         ax_w.legend(
             loc="upper center",
             bbox_to_anchor=(0.5, -0.2),
