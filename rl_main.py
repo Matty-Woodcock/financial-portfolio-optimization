@@ -62,6 +62,8 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
         if render:
             test_env.render()
 
+    assert test_env.test_counter == 207
+
     return test_env.get_metric_summaries()
 
 if __name__ == "__main__":

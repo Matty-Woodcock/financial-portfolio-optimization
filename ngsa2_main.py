@@ -10,7 +10,7 @@ from rl_env import PortfolioEnv
 from rl_reward import RewardFunction, PureReturn
 from ngsa2_problem import PortfolioNSGA2Problem
 
-def run_nsga(env, pop_size=80, n_gen=50):
+def run_nsga(env, pop_size=60, n_gen=20):
 
     problem = PortfolioNSGA2Problem(env)
 
@@ -58,12 +58,10 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
     print(f"Evaluating on {len(eval_df)} days.") #246
     print(f"Testing on {len(test_df)} days.") #247
 
-    train_env = PortfolioEnv(train_df, reward_function, train_volatilities)
-    eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
-    test_env = PortfolioEnv(test_df, reward_function, test_volatilities)
-
     window_size = 40
-    n_steps = len(test_df) - window_size
+    n_steps = len(test_df)
+
+    assert n_steps > window_size
 
     weights_history = []
     portfolio_value_history = []
@@ -72,13 +70,20 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
 
     #Training
 
-    for start_index in range(0, n_steps, 5):
-        end_index = start_index + window_size #TO DO: Correct? Not +1?
-        window_data = test_df.iloc[start_index:end_index]
+    initial_env = True
+    current_portfolio_value = 1.0
+    step_size = 5
 
-        window_env = PortfolioEnv(window_data, PureReturn(), test_volatilities[start_index:end_index])
+    for start_index in range(0, n_steps - window_size, step_size):
+        train_end = start_index + window_size #TO DO: Correct? Not +1?
+        test_end = min(train_end + step_size, n_steps)
 
-        res = run_nsga(window_env) #This is a result object
+        train_window = test_df.iloc[start_index:train_end]
+        test_window = test_df.iloc[train_end:test_end]
+
+        train_env = PortfolioEnv(train_window, PureReturn(), test_volatilities[start_index:train_end])
+
+        res = run_nsga(train_env) #This is a result object
         pareto_actions = res.X
         pareto_objectives = res.F
     
@@ -97,32 +102,36 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
 
         #Testing
 
-        obs, _ = window_env.reset(observation = False) #TO DO: This is wrong? Misaligned?
+        test_env = PortfolioEnv(test_window, PureReturn(), test_volatilities[train_end:test_end])
+
+        obs, _ = test_env.reset(observation=False, initial_portfolio_value=current_portfolio_value, initial_env=initial_env)
+        if not initial_env:
+            test_env.weights = weights_history[-1]
+        initial_env = False
         done = False
 
         while not done:
-            obs, _, done, _, info = window_env.step(best_action)
+            obs, _, done, _, info = test_env.step(best_action)
 
-        window_metric_summaries = window_env.get_metric_summaries()
-        #print(ngsa2_metric_summaries["portfolio_value"].aggregate, len(ngsa2_metric_summaries["portfolio_value"].series))
-        #return ngsa2_metric_summaries
-        #print(window_metric_summaries["ticker_prices"].series)
+        test_metric_summaries = test_env.get_metric_summaries()
+        test_length = len(test_window)
         
-        weights_history.append(window_metric_summaries["portfolio_weights"].series[-1])  
-        portfolio_value_history.append(window_metric_summaries["portfolio_value"].aggregate)  
-        portfolio_return_history.append(window_env.portfolio_return_history[-1])  
-        transaction_cost_percentage_history.append(window_metric_summaries["transaction_cost_percentage"].series[-1])  
-        #print(window_env.prices)
+        weights_history.extend(test_metric_summaries["portfolio_weights"].series[-test_length:])  
+        portfolio_value_history.extend(test_metric_summaries["portfolio_value"].series[-test_length:])  
+        portfolio_return_history.extend(test_env.portfolio_return_history[-test_length:])  
+        transaction_cost_percentage_history.extend(test_metric_summaries["transaction_cost_percentage"].series[-test_length:])
 
-    window_env.weights_history = weights_history
-    window_env.portfolio_value_history = portfolio_value_history
-    window_env.portfolio_return_history = portfolio_return_history
-    window_env.transaction_cost_percentage_history = transaction_cost_percentage_history
+        current_portfolio_value = portfolio_value_history[-1]
 
-    return window_env.get_metric_summaries()
+    test_env.weights_history = weights_history
+    test_env.portfolio_value_history = portfolio_value_history
+    test_env.portfolio_return_history = portfolio_return_history
+    test_env.transaction_cost_percentage_history = transaction_cost_percentage_history
+    test_env.prices = test_df.values
+
+    return test_env.get_metric_summaries()
 
 if __name__ == "__main__":
     train_and_test_one_ngsa2(PureReturn(), render=False)
 
-#TO DO: Add transaction cost? Rethink step size? Sharpe ratio issue? (Potentially Fixed) Check length of portfolio values. Transaction cost issue?
-#TO DO: FIX ERROR WITH OBSERVATION WINDOW IN TEST (Train should be fine)
+#TO DO: Add transaction cost to training the same way I have done with testing

@@ -80,7 +80,7 @@ class PortfolioEnv(gym.Env):
 
         portfolio_value_before_step = self.portfolio_value
 
-        if (self.observation and self.current_step > self.window_size) or (not self.observation and self.current_step > 0):
+        if (self.observation and self.current_step > self.window_size) or (not self.observation and self.current_step > 0) or (not self.initial_env):
             turnover = np.sum(np.abs(new_weights - self.weights)) / 2.0
             self.cost = self.portfolio_value * turnover * self.transaction_cost
         else:
@@ -94,6 +94,7 @@ class PortfolioEnv(gym.Env):
         #Below can potentially be changed as we already calculated portfolio returns? But probably not.
         prev_prices = self.prices[self.current_step - 1]
         current_prices = self.prices[self.current_step]
+        self.test_counter += 1
 
         #Compute returns per asset and then combine with cash
         #asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
@@ -137,14 +138,15 @@ class PortfolioEnv(gym.Env):
 
         return obs, reward, done, False, info
     
-    def reset(self, seed=None, options=None, observation = True): #This is called everytime
+    def reset(self, seed=None, options=None, observation=True, initial_portfolio_value=1.0, initial_env=True): #This is called everytime
         super().reset(seed=seed)
         self.current_step = self.window_size
-        self.portfolio_value = 1.0
+        self.portfolio_value = initial_portfolio_value
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
 
         self.observation = observation
+        self.initial_env = initial_env
         
         self.weights_history = []
         self.portfolio_value_history = []

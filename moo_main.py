@@ -109,7 +109,7 @@ def main():
 
     print([extract_aggregates(policy_metric_summaries) for policy_metric_summaries in pareto_front_policy_metric_summaries])
 
-    #Experimental Plotting
+    #Plotting Results Graphs
 
     cmap = plt.get_cmap("tab20")
     COLOR_MAP = {symbol: cmap(i) for i, symbol in enumerate(ALL_SYMBOLS_WITH_CASH)}
@@ -120,7 +120,11 @@ def main():
 
     pareto_front_counter = 0
 
-    for policy_metric_summaries in pareto_front_policy_metric_summaries:
+    for policy_metric_summaries in all_policy_metric_summaries:
+        # print(len(policy_metric_summaries["ticker_prices"].series[39:]))
+        # print(len(policy_metric_summaries["portfolio_value"].series))
+        # print(len(policy_metric_summaries["hhi"].series))
+
         fig, axes = plt.subplots(
             nrows=3,
             ncols=1,
@@ -222,7 +226,6 @@ if __name__ == "__main__":
     main()
 
 #TO DO
-#1. Speed up
-#2. Seperate MOO
+#2. Add Basic MOO EA
 #3. DCC-GARCH?
 

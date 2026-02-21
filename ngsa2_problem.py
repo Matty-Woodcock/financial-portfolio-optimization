@@ -16,20 +16,13 @@ class PortfolioNSGA2Problem(ElementwiseProblem):
         obs, _ = self.env.reset(observation = False)
 
         done = False
-        #count = 0
         while not done:
             obs, reward, done, _, _ = self.env.step(action)
-            # print(count)
-            # input("X")
-            # count += 1
 
         metrics = self.env.get_metric_summaries()
 
         objective_one = metrics["portfolio_value"].aggregate
         objective_two = metrics["mdd"].aggregate
-
-        # print(metrics["portfolio_value"].series)
-        # input("X")
-
+        
         #pymoo tries to minimised by default
         out["F"] = [-objective_one, -objective_two]
