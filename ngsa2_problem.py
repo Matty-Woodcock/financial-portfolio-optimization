@@ -6,24 +6,30 @@ class PortfolioNSGA2Problem(ElementwiseProblem):
     def __init__(self, env):
         super().__init__(
             n_var=env.n_assets,
-            n_obj=2,                # Sharpe (max), Turnover (min)
+            n_obj=2,
             xl=-10.0,
             xu=10.0
         )
         self.env = env
 
     def _evaluate(self, action, out, *args, **kwargs):
-        obs, _ = self.env.reset()
+        obs, _ = self.env.reset(observation = False)
 
         done = False
-
+        #count = 0
         while not done:
             obs, reward, done, _, _ = self.env.step(action)
+            # print(count)
+            # input("X")
+            # count += 1
 
         metrics = self.env.get_metric_summaries()
 
         objective_one = metrics["portfolio_value"].aggregate
         objective_two = metrics["mdd"].aggregate
+
+        # print(metrics["portfolio_value"].series)
+        # input("X")
 
         #pymoo tries to minimised by default
         out["F"] = [-objective_one, -objective_two]

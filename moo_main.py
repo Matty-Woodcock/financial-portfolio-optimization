@@ -87,11 +87,13 @@ def main():
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
+            # print(policy_metric_summaries["portfolio_value"].series[0])
+            # input("Z")
+            print("Length RL:", len(policy_metric_summaries["portfolio_value"].series))
         ngsa2_metric_summaries = train_and_test_one_ngsa2(PureReturn())
         all_policy_metric_summaries.append(ngsa2_metric_summaries)
-        # print(ngsa2_metric_summaries)
-        # input("X")
         all_policy_metric_aggregates.append(extract_aggregates(ngsa2_metric_summaries))
+        print("Length EA:", len(ngsa2_metric_summaries["portfolio_value"].series))
         
     directions = [
         all_policy_metric_summaries[0]["portfolio_value"].direction,

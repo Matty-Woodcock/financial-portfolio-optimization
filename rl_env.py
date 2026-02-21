@@ -80,7 +80,7 @@ class PortfolioEnv(gym.Env):
 
         portfolio_value_before_step = self.portfolio_value
 
-        if self.current_step > self.window_size:
+        if (self.observation and self.current_step > self.window_size) or (not self.observation and self.current_step > 0):
             turnover = np.sum(np.abs(new_weights - self.weights)) / 2.0
             self.cost = self.portfolio_value * turnover * self.transaction_cost
         else:
@@ -130,27 +130,35 @@ class PortfolioEnv(gym.Env):
         self.portfolio_return_history.append(portfolio_return)
         self.transaction_cost_percentage_history.append(transaction_cost_percentage)
 
-        if not done:
+        if not done and self.observation:
             obs = self._get_observation()
         else:
             obs = None
 
         return obs, reward, done, False, info
     
-    def reset(self, seed=None, options=None): #TO DO: Experiment with how often this is called
+    def reset(self, seed=None, options=None, observation = True): #This is called everytime
         super().reset(seed=seed)
         self.current_step = self.window_size
         self.portfolio_value = 1.0
         self.weights = np.zeros(self.n_assets)
         self.weights[0] = 1.0
+
+        self.observation = observation
         
         self.weights_history = []
         self.portfolio_value_history = []
         self.portfolio_return_history = []
         self.transaction_cost_percentage_history = []
 
+        if self.observation:
+            self.current_step = self.window_size
+            obs = self._get_observation()
+        else:
+            self.current_step = 0
+            obs = None
+
         self.test_counter = 0
-        obs = self._get_observation()
         info = {}
         return obs, info
 

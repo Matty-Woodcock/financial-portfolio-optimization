@@ -61,38 +61,68 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
     train_env = PortfolioEnv(train_df, reward_function, train_volatilities)
     eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
     test_env = PortfolioEnv(test_df, reward_function, test_volatilities)
-    
+
+    window_size = 40
+    n_steps = len(test_df) - window_size
+
+    weights_history = []
+    portfolio_value_history = []
+    portfolio_return_history = []
+    transaction_cost_percentage_history = []
+
     #Training
 
-    res = run_nsga(eval_env) #This is a result object
+    for start_index in range(0, n_steps, 5):
+        end_index = start_index + window_size #TO DO: Correct? Not +1?
+        window_data = test_df.iloc[start_index:end_index]
 
-    pareto_actions = res.X
-    pareto_objectives = res.F
+        window_env = PortfolioEnv(window_data, PureReturn(), test_volatilities[start_index:end_index])
+
+        res = run_nsga(window_env) #This is a result object
+        pareto_actions = res.X
+        pareto_objectives = res.F
     
-    objective_one = pareto_objectives[:, 0]
-    objective_two = pareto_objectives[:, 1]
-    sign_correct_objective_one = -objective_one
-    sign_correct_objective_two = -objective_two
+        objective_one = pareto_objectives[:, 0]
+        objective_two = pareto_objectives[:, 1]
+        sign_correct_objective_one = -objective_one
+        sign_correct_objective_two = -objective_two
 
-    #Choose highest Sharpe solution
-    best_index = np.argmin(objective_one)
-    best_action = pareto_actions[best_index]
+        #Choose highest Sharpe solution
+        best_index = np.argmin(objective_one)
+        best_action = pareto_actions[best_index]
 
-    print(pareto_objectives[best_index])
+        # print(pareto_objectives[best_index]) #TO DO: All in cash or error due to no change?
 
-    plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
+        # plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
 
-    #Testing
+        #Testing
 
-    obs, _ = test_env.reset()
-    done = False
+        obs, _ = window_env.reset(observation = False) #TO DO: This is wrong? Misaligned?
+        done = False
 
-    while not done:
-        obs, _, done, _, info = test_env.step(best_action)
+        while not done:
+            obs, _, done, _, info = window_env.step(best_action)
 
-    ngsa2_metric_summaries = test_env.get_metric_summaries()
-    #print(ngsa2_metric_summaries["portfolio_value"].aggregate, len(ngsa2_metric_summaries["portfolio_value"].series))
-    return ngsa2_metric_summaries
+        window_metric_summaries = window_env.get_metric_summaries()
+        #print(ngsa2_metric_summaries["portfolio_value"].aggregate, len(ngsa2_metric_summaries["portfolio_value"].series))
+        #return ngsa2_metric_summaries
+        #print(window_metric_summaries["ticker_prices"].series)
+        
+        weights_history.append(window_metric_summaries["portfolio_weights"].series[-1])  
+        portfolio_value_history.append(window_metric_summaries["portfolio_value"].aggregate)  
+        portfolio_return_history.append(window_env.portfolio_return_history[-1])  
+        transaction_cost_percentage_history.append(window_metric_summaries["transaction_cost_percentage"].series[-1])  
+        #print(window_env.prices)
+
+    window_env.weights_history = weights_history
+    window_env.portfolio_value_history = portfolio_value_history
+    window_env.portfolio_return_history = portfolio_return_history
+    window_env.transaction_cost_percentage_history = transaction_cost_percentage_history
+
+    return window_env.get_metric_summaries()
 
 if __name__ == "__main__":
     train_and_test_one_ngsa2(PureReturn(), render=False)
+
+#TO DO: Add transaction cost? Rethink step size? Sharpe ratio issue? (Potentially Fixed) Check length of portfolio values. Transaction cost issue?
+#TO DO: FIX ERROR WITH OBSERVATION WINDOW IN TEST (Train should be fine)
