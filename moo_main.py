@@ -6,6 +6,7 @@ from datetime import datetime
 
 from rl_main import train_and_test_one_policy
 from ngsa2_main import train_and_test_one_ngsa2
+from ngsa2_static import train_and_test_one_static_ngsa2
 from rl_reward import PureReturn, LogReturn, HighHHI
 from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH
 
@@ -15,12 +16,6 @@ def extract_aggregates(policy_metric_summaries):
         policy_metric_summaries["hhi"].aggregate,
         policy_metric_summaries["mdd"].aggregate
     ]
-    # return [
-    #         round(policy_metric_summaries["portfolio_value"].aggregate, 4),
-    #         round(policy_metric_summaries["hhi"].aggregate, 4),
-    #         round(policy_metric_summaries["mdd"].aggregate, 4)
-    #     ]
-
 
 def rolling_volatility_calculator(portfolio_values, window_size=20):
     portfolio_values = np.array(portfolio_values)
@@ -88,10 +83,17 @@ def main():
             all_policy_metric_summaries.append(policy_metric_summaries)
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
             print("Length RL:", len(policy_metric_summaries["portfolio_value"].series))
-        ngsa2_metric_summaries = train_and_test_one_ngsa2(PureReturn())
-        all_policy_metric_summaries.append(ngsa2_metric_summaries)
-        all_policy_metric_aggregates.append(extract_aggregates(ngsa2_metric_summaries))
-        print("Length EA:", len(ngsa2_metric_summaries["portfolio_value"].series))
+
+        ngsa2_rolling_metric_summaries = train_and_test_one_ngsa2()
+        all_policy_metric_summaries.append(ngsa2_rolling_metric_summaries)
+        all_policy_metric_aggregates.append(extract_aggregates(ngsa2_rolling_metric_summaries))
+
+        ngsa2_static_metric_summaries = train_and_test_one_static_ngsa2()
+        all_policy_metric_summaries.append(ngsa2_static_metric_summaries)
+        all_policy_metric_aggregates.append(extract_aggregates(ngsa2_static_metric_summaries))
+
+        print("Length Rolling EA:", len(ngsa2_rolling_metric_summaries["portfolio_value"].series))
+        print("Length Static EA:", len(ngsa2_static_metric_summaries["portfolio_value"].series))
         
     directions = [
         all_policy_metric_summaries[0]["portfolio_value"].direction,
@@ -187,6 +189,7 @@ def main():
             labels=ALL_SYMBOLS_WITH_CASH
         )
 
+        ax_w.xaxis.set_tick_params(labelbottom=True)
         ax_w.set_ylabel("Weight")
         ax_w.set_xlabel("Days")
         #TO DO: Are signficant figures possible below?
@@ -199,7 +202,7 @@ def main():
 
         #Ticker Prices
 
-        prices = policy_metric_summaries["ticker_prices"].series[149:] #Prices in initial observation window are discarded 39:
+        prices = policy_metric_summaries["ticker_prices"].series[39:] #Prices in initial observation window are discarded 39:
         prices_norm = prices / prices[0]
 
         ax_p = axes[2]

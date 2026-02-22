@@ -8,11 +8,11 @@ from price_data_reader_writer import load_or_update_price_data
 from config.constants import GARCH_BURN_IN_DAYS
 from rl_env import PortfolioEnv
 from rl_reward import RewardFunction, PureReturn
-from ngsa2_problem import PortfolioNSGA2Problem
+from ngsa2_problem import PortfolioNSGA2RollingProblem
 
-def run_nsga(env, initial_env, initial_weights, pop_size=80, n_gen=50):
+def run_nsga(env, initial_env, initial_weights, pop_size=40, n_gen=20):
 
-    problem = PortfolioNSGA2Problem(env, initial_env, initial_weights)
+    problem = PortfolioNSGA2RollingProblem(env, initial_env, initial_weights)
 
     algorithm = NSGA2(pop_size=pop_size)
 
@@ -36,7 +36,7 @@ def plot_pareto_front(objective_one, objective_two):
     plt.legend()
     plt.show()
 
-def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
+def train_and_test_one_ngsa2(render=False):
     try:
         prices_df, train_volatilities, eval_volatilities, test_volatilities = load_or_update_price_data()
     except ValueError as error:
@@ -58,7 +58,7 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
     print(f"Evaluating on {len(eval_df)} days.") #246
     print(f"Testing on {len(test_df)} days.") #247
 
-    window_size = 150
+    window_size = 40
     n_steps = len(test_df)
 
     assert n_steps > window_size
@@ -72,7 +72,7 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
 
     initial_env = True
     current_portfolio_value = 1.0
-    step_size = 100
+    step_size = 10
 
     for start_index in range(0, n_steps - window_size, step_size):
         train_end = start_index + window_size
@@ -110,7 +110,7 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
 
         # print(pareto_objectives[best_index]) #TO DO: All in cash or error due to no change?
 
-        plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
+        #plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
 
         #Testing
 
@@ -144,4 +144,4 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
     return test_env.get_metric_summaries()
 
 if __name__ == "__main__":
-    train_and_test_one_ngsa2(PureReturn(), render=False)
+    train_and_test_one_ngsa2(render=False)
