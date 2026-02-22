@@ -3,7 +3,7 @@ from pymoo.core.problem import ElementwiseProblem
 
 class PortfolioNSGA2RollingProblem(ElementwiseProblem):
 
-    def __init__(self, env, initial_env, initial_weights):
+    def __init__(self, env, initial_env, initial_weights, prev_prices):
         super().__init__(
             n_var=env.n_assets,
             n_obj=2,
@@ -13,9 +13,10 @@ class PortfolioNSGA2RollingProblem(ElementwiseProblem):
         self.env = env
         self.initial_env = initial_env
         self.initial_weights = initial_weights
+        self.prev_prices = prev_prices
 
     def _evaluate(self, action, out, *args, **kwargs):
-        obs, _ = self.env.reset(observation = False, initial_env = self.initial_env)
+        obs, _ = self.env.reset(observation = False, initial_env = self.initial_env, prev_prices=self.prev_prices)
         if not self.initial_env:
             self.env.weights = self.initial_weights
         done = False

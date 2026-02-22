@@ -10,9 +10,9 @@ from rl_env import PortfolioEnv
 from rl_reward import RewardFunction, PureReturn
 from ngsa2_problem import PortfolioNSGA2RollingProblem
 
-def run_nsga(env, initial_env, initial_weights, pop_size=40, n_gen=20):
+def run_nsga(env, initial_env, initial_weights, prev_prices, pop_size=40, n_gen=20):
 
-    problem = PortfolioNSGA2RollingProblem(env, initial_env, initial_weights)
+    problem = PortfolioNSGA2RollingProblem(env, initial_env, initial_weights, prev_prices)
 
     algorithm = NSGA2(pop_size=pop_size)
 
@@ -73,6 +73,7 @@ def train_and_test_one_ngsa2(render=False):
     initial_env = True
     current_portfolio_value = 1.0
     step_size = 10
+    train_prev_prices = eval_df.iloc[-1].values
 
     for start_index in range(0, n_steps - window_size, step_size):
         train_end = start_index + window_size
@@ -89,7 +90,7 @@ def train_and_test_one_ngsa2(render=False):
             initial_weights = np.zeros(train_env.n_assets)
             initial_weights[0] = 1.0
 
-        res = run_nsga(train_env, initial_env, initial_weights) #This is a result object
+        res = run_nsga(train_env, initial_env, initial_weights, train_prev_prices) #This is a result object
         pareto_actions = res.X
         pareto_objectives = res.F
     
@@ -114,9 +115,11 @@ def train_and_test_one_ngsa2(render=False):
 
         #Testing
 
+        test_prev_prices = train_window.iloc[-1].values 
+
         test_env = PortfolioEnv(test_window, PureReturn(), test_volatilities[train_end:test_end])
 
-        obs, _ = test_env.reset(observation=False, initial_portfolio_value=current_portfolio_value, initial_env=initial_env)
+        obs, _ = test_env.reset(observation=False, initial_portfolio_value=current_portfolio_value, initial_env=initial_env, prev_prices=test_prev_prices)
         if not initial_env:
             test_env.weights = weights_history[-1]
         initial_env = False
@@ -134,6 +137,7 @@ def train_and_test_one_ngsa2(render=False):
         transaction_cost_percentage_history.extend(test_metric_summaries["transaction_cost_percentage"].series[-test_length:])
 
         current_portfolio_value = portfolio_value_history[-1]
+        train_prev_prices = train_window.iloc[step_size - 1].values
 
     test_env.weights_history = weights_history
     test_env.portfolio_value_history = portfolio_value_history

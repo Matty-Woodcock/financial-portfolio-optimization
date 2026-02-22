@@ -82,7 +82,7 @@ def main():
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
-            print("Length RL:", len(policy_metric_summaries["portfolio_value"].series))
+            assert len(policy_metric_summaries["portfolio_value"].series) == 207
 
         ngsa2_rolling_metric_summaries = train_and_test_one_ngsa2()
         all_policy_metric_summaries.append(ngsa2_rolling_metric_summaries)
@@ -94,6 +94,7 @@ def main():
 
         print("Length Rolling EA:", len(ngsa2_rolling_metric_summaries["portfolio_value"].series))
         print("Length Static EA:", len(ngsa2_static_metric_summaries["portfolio_value"].series))
+        assert len(ngsa2_static_metric_summaries["portfolio_value"].series) == 207
         
     directions = [
         all_policy_metric_summaries[0]["portfolio_value"].direction,
@@ -120,9 +121,9 @@ def main():
 
     pareto_front_counter = 0
 
-    for policy_metric_summaries in all_policy_metric_summaries:
+    for policy_metric_summaries in all_policy_metric_summaries: #TO DO: Change this back to pareto_front_policy_metric_summaries
         # print(len(policy_metric_summaries["ticker_prices"].series[39:]))
-        print(policy_metric_summaries["portfolio_value"].series)
+        print(len(policy_metric_summaries["portfolio_value"].series))
         # print(len(policy_metric_summaries["hhi"].series))
 
         fig, axes = plt.subplots(
@@ -136,7 +137,7 @@ def main():
         ax2 = ax1.twinx() #Second y-axis for HHI
 
         n_trading_days = len(policy_metric_summaries["portfolio_value"].series)
-        trading_days = np.arange(1, n_trading_days + 1)
+        trading_days = np.arange(1, n_trading_days + 1) #TO DO: Is this necessary?
 
         ax1.plot(
             trading_days,

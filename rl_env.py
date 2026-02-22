@@ -92,8 +92,14 @@ class PortfolioEnv(gym.Env):
         transaction_cost_percentage = self.cost * 100
 
         #Below can potentially be changed as we already calculated portfolio returns? But probably not.
-        prev_prices = self.prices[self.current_step - 1]
+        if self.current_step == 0:
+            if self.prev_prices is None:
+                raise ValueError("In PortfolioEnv, current_step starting from zero but prev_prices is None.")
+            prev_prices = self.prev_prices
+        else:
+            prev_prices = self.prices[self.current_step - 1]
         current_prices = self.prices[self.current_step]
+
         self.test_counter += 1
 
         #Compute returns per asset and then combine with cash
@@ -138,7 +144,7 @@ class PortfolioEnv(gym.Env):
 
         return obs, reward, done, False, info
     
-    def reset(self, seed=None, options=None, observation=True, initial_portfolio_value=1.0, initial_env=True): #This is called everytime
+    def reset(self, seed=None, options=None, observation=True, initial_portfolio_value=1.0, initial_env=True, prev_prices=None): #This is called everytime
         super().reset(seed=seed)
         self.current_step = self.window_size
         self.portfolio_value = initial_portfolio_value
@@ -147,6 +153,7 @@ class PortfolioEnv(gym.Env):
 
         self.observation = observation
         self.initial_env = initial_env
+        self.prev_prices = prev_prices
         
         self.weights_history = []
         self.portfolio_value_history = []
