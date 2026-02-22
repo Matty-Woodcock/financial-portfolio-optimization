@@ -10,9 +10,9 @@ from rl_env import PortfolioEnv
 from rl_reward import RewardFunction, PureReturn
 from ngsa2_problem import PortfolioNSGA2Problem
 
-def run_nsga(env, pop_size=60, n_gen=20):
+def run_nsga(env, initial_env, initial_weights, pop_size=80, n_gen=50):
 
-    problem = PortfolioNSGA2Problem(env)
+    problem = PortfolioNSGA2Problem(env, initial_env, initial_weights)
 
     algorithm = NSGA2(pop_size=pop_size)
 
@@ -58,7 +58,7 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
     print(f"Evaluating on {len(eval_df)} days.") #246
     print(f"Testing on {len(test_df)} days.") #247
 
-    window_size = 40
+    window_size = 150
     n_steps = len(test_df)
 
     assert n_steps > window_size
@@ -72,10 +72,10 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
 
     initial_env = True
     current_portfolio_value = 1.0
-    step_size = 5
+    step_size = 100
 
     for start_index in range(0, n_steps - window_size, step_size):
-        train_end = start_index + window_size #TO DO: Correct? Not +1?
+        train_end = start_index + window_size
         test_end = min(train_end + step_size, n_steps)
 
         train_window = test_df.iloc[start_index:train_end]
@@ -83,7 +83,13 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
 
         train_env = PortfolioEnv(train_window, PureReturn(), test_volatilities[start_index:train_end])
 
-        res = run_nsga(train_env) #This is a result object
+        if not initial_env:
+            initial_weights = weights_history[-1]
+        else:
+            initial_weights = np.zeros(train_env.n_assets)
+            initial_weights[0] = 1.0
+
+        res = run_nsga(train_env, initial_env, initial_weights) #This is a result object
         pareto_actions = res.X
         pareto_objectives = res.F
     
@@ -91,14 +97,20 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
         objective_two = pareto_objectives[:, 1]
         sign_correct_objective_one = -objective_one
         sign_correct_objective_two = -objective_two
+        #sign_correct_objective_two = objective_two
 
         #Choose highest Sharpe solution
         best_index = np.argmin(objective_one)
+        sorted_indices = np.argsort(objective_one)
+        one_quarter_index = sorted_indices[int(0.25 * len(sorted_indices))]
         best_action = pareto_actions[best_index]
+        # print(objective_one[sorted_indices])
+        # print(objective_one[one_quarter_index])
+        # input("X")
 
         # print(pareto_objectives[best_index]) #TO DO: All in cash or error due to no change?
 
-        # plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
+        plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
 
         #Testing
 
@@ -133,5 +145,3 @@ def train_and_test_one_ngsa2(reward_function: RewardFunction, render=False):
 
 if __name__ == "__main__":
     train_and_test_one_ngsa2(PureReturn(), render=False)
-
-#TO DO: Add transaction cost to training the same way I have done with testing

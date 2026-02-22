@@ -16,7 +16,7 @@ def main():
     test_df = prices_df.iloc[eval_split_index:]
 
     test_df_excluding_window_and_burn_in = test_df[39:] #This has been verified to be correct 
-    
+
     #Choose portfolio weights for baseline
     #["CASH", "AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ", "TLT", "GLD"]
     baseline_weights = [1/len(ALL_SYMBOLS_WITH_CASH)] * len(ALL_SYMBOLS_WITH_CASH)
