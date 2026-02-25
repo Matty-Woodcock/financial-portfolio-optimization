@@ -18,7 +18,7 @@ class PortfolioNSGA2RollingProblem(ElementwiseProblem):
     def _evaluate(self, action, out, *args, **kwargs):
         obs, _ = self.env.reset(observation = False, initial_env = self.initial_env, prev_prices=self.prev_prices)
         if not self.initial_env:
-            self.env.weights = self.initial_weights
+            self.env.weights = self.initial_weights.copy()
         done = False
 
         while not done:

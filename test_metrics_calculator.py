@@ -42,7 +42,7 @@ def calculate_sharpe_ratio(portfolio_return_history):
     rf_daily = (1 + rf_annual)**(1 / trading_days) - 1
     excess = returns - rf_daily
 
-    sharpe_ratio = (excess.mean()/ excess.std(ddof=1)) * np.sqrt(len(excess))
+    sharpe_ratio = (excess.mean()/ excess.std(ddof=1)) * np.sqrt(trading_days)
 
     return sharpe_ratio
 

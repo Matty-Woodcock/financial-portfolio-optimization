@@ -23,10 +23,10 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
     test_df = prices_df.iloc[eval_split_index:]
 
-    print(f"Burning in on {len(burn_in_df)} days.") #251
-    print(f"Training on {len(train_df)} days.") #1148
-    print(f"Evaluating on {len(eval_df)} days.") #246
-    print(f"Testing on {len(test_df)} days.") #247
+    # print(f"Burning in on {len(burn_in_df)} days.") #251
+    # print(f"Training on {len(train_df)} days.") #1148
+    # print(f"Evaluating on {len(eval_df)} days.") #246
+    # print(f"Testing on {len(test_df)} days.") #247
 
     train_env = PortfolioEnv(train_df, reward_function, train_volatilities)
     eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
@@ -39,11 +39,10 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
                             deterministic=True, 
                             render=False)
 
-
-    model = PPO("MlpPolicy", train_env, verbose=1)
+    model = PPO("MlpPolicy", train_env, verbose=1, ent_coef=0.05)
 
     print("Training Starting")
-    model.learn(total_timesteps=8000, callback=callback)
+    model.learn(total_timesteps=20000, callback=callback)
     print("Training Complete")
     
     # print(f"Training GARCH Total Runtimes: {train_env.garch_average_runtimes}")

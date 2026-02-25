@@ -76,25 +76,25 @@ def main():
                         LogReturn(volatility_in_observation_space=True),
                         HighHHI(volatility_in_observation_space=True),
                         LowVolatility(volatility_in_observation_space=True),]
-    #reward_functions = [LowVolatility()]
+    #reward_functions = [PureReturn()]
 
-    for i in range(3):
+    for i in range(0):
         for reward_function in reward_functions:
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
             assert len(policy_metric_summaries["portfolio_value"].series) == 207
 
-        ngsa2_rolling_metric_summaries = train_and_test_one_ngsa2()
-        all_policy_metric_summaries.append(ngsa2_rolling_metric_summaries)
-        all_policy_metric_aggregates.append(extract_aggregates(ngsa2_rolling_metric_summaries))
+    ngsa2_rolling_metric_summaries = train_and_test_one_ngsa2()
+    all_policy_metric_summaries.append(ngsa2_rolling_metric_summaries)
+    all_policy_metric_aggregates.append(extract_aggregates(ngsa2_rolling_metric_summaries))
 
     ngsa2_static_metric_summaries = train_and_test_one_static_ngsa2()
     all_policy_metric_summaries.append(ngsa2_static_metric_summaries)
     all_policy_metric_aggregates.append(extract_aggregates(ngsa2_static_metric_summaries))
 
-    # print("Length Rolling EA:", len(ngsa2_rolling_metric_summaries["portfolio_value"].series))
-    # print("Length Static EA:", len(ngsa2_static_metric_summaries["portfolio_value"].series))
+    print("Length Rolling EA:", len(ngsa2_rolling_metric_summaries["portfolio_value"].series))
+    print("Length Static EA:", len(ngsa2_static_metric_summaries["portfolio_value"].series))
     assert len(ngsa2_static_metric_summaries["portfolio_value"].series) == 207
     
     directions = [
@@ -121,6 +121,15 @@ def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     pareto_front_counter = 0
+
+    all_portfolio_values = [p["portfolio_value"].series for p in pareto_front_policy_metric_summaries]
+    all_rolling_volatilities = [rolling_volatility_calculator(p["portfolio_value"].series) for p in pareto_front_policy_metric_summaries]
+    all_hhi = [p["hhi"].series for p in pareto_front_policy_metric_summaries[:-1]]
+
+    pv_min = min(min(pv) for pv in all_portfolio_values)
+    pv_max = max(max(pv) for pv in all_portfolio_values)
+    hhi_max = max(max(h) for h in all_hhi)
+    vol_max = max(max(v) for v in all_rolling_volatilities)
 
     for policy_metric_summaries in pareto_front_policy_metric_summaries: #TO DO: Change this back to pareto_front_policy_metric_summaries
         fig, axes = plt.subplots(
@@ -150,7 +159,7 @@ def main():
             label="HHI",
             alpha=0.8
         )
-        rolling_volatility = rolling_volatility_calculator(policy_metric_summaries["portfolio_value"].series)
+        rolling_volatility = all_rolling_volatilities[pareto_front_counter]
         #print(len(rolling_volatility), len(policy_metric_summaries["portfolio_value"].series), len(policy_metric_summaries["hhi"].series))
         # print(rolling_volatility)
         assert len(rolling_volatility) == len(policy_metric_summaries["portfolio_value"].series) == len(policy_metric_summaries["hhi"].series)
@@ -167,6 +176,9 @@ def main():
         ax1.set_xlabel("Days")
         ax1.set_ylabel("Portfolio Value (Blue)")
         ax2.set_ylabel("HHI (Dotted) & Rolling Annualised Volatility (Red)")
+
+        ax1.set_ylim([pv_min * 0.95, pv_max * 1.05])
+        ax2.set_ylim([0.0, max(hhi_max, vol_max) * 1.03])
 
         rounded_return = round(policy_metric_summaries['portfolio_value'].aggregate, 3)
         rounded_sharpe_ratio = round(policy_metric_summaries['sharpe_ratio'].aggregate, 3)

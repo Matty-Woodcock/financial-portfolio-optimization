@@ -109,8 +109,8 @@ def train_and_test_one_ngsa2(render=False):
         best_index = np.argmin(distances)
         best_action = pareto_actions[best_index]
 
-        # if start_index == 0:
-        #     plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
+        if start_index == 0:
+            plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
         #Testing
 
