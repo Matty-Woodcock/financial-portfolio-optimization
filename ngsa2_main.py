@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
@@ -9,6 +8,7 @@ from config.constants import GARCH_BURN_IN_DAYS
 from rl_env import PortfolioEnv
 from rl_reward import RewardFunction, PureReturn
 from ngsa2_problem import PortfolioNSGA2RollingProblem
+from ngas2_utility import plot_pareto_front
 
 def run_nsga(env, initial_env, initial_weights, prev_prices, pop_size=40, n_gen=20):
 
@@ -24,17 +24,6 @@ def run_nsga(env, initial_env, initial_weights, prev_prices, pop_size=40, n_gen=
     )
 
     return res
-
-def plot_pareto_front(objective_one, objective_two):
-    plt.figure(figsize=(8,6))
-    plt.scatter(objective_one, objective_two, c='blue', label='Pareto Solutions')
-    plt.xlabel("Objective One")
-    plt.ylabel("Objective Two")
-    plt.title("Pareto Front")
-    plt.grid(True)
-
-    plt.legend()
-    plt.show()
 
 def train_and_test_one_ngsa2(render=False):
     try:
@@ -58,9 +47,12 @@ def train_and_test_one_ngsa2(render=False):
     print(f"Evaluating on {len(eval_df)} days.") #246
     print(f"Testing on {len(test_df)} days.") #247
 
-    window_size = 40
-    n_steps = len(test_df)
+    #Configuration
 
+    window_size = 40
+    step_size = 10
+
+    n_steps = len(test_df)
     assert n_steps > window_size
 
     weights_history = []
@@ -72,7 +64,6 @@ def train_and_test_one_ngsa2(render=False):
 
     initial_env = True
     current_portfolio_value = 1.0
-    step_size = 10
     train_prev_prices = eval_df.iloc[-1].values
 
     for start_index in range(0, n_steps - window_size, step_size):
@@ -101,17 +92,25 @@ def train_and_test_one_ngsa2(render=False):
         #sign_correct_objective_two = objective_two
 
         #Choose highest Sharpe solution
-        best_index = np.argmin(objective_one)
-        sorted_indices = np.argsort(objective_one)
-        one_quarter_index = sorted_indices[int(0.25 * len(sorted_indices))]
+        # best_index = np.argmin(objective_one)
+        # sorted_indices = np.argsort(objective_one)
+        # one_quarter_index = sorted_indices[int(0.25 * len(sorted_indices))]
+        # best_action = pareto_actions[best_index]
+        
+        #Normalise objectives to [0,1] so neither dominates by scale
+        obj_min = pareto_objectives.min(axis=0)
+        obj_max = pareto_objectives.max(axis=0)
+        obj_range = obj_max - obj_min + 1e-8  #Avoids division by zero
+        normalised = (pareto_objectives - obj_min) / obj_range
+
+        #Utopia point is (0, 0) after normalisation
+        #distances = np.linalg.norm(normalised, axis=1)
+        distances = np.linalg.norm(normalised * np.array([0.65, 0.35]), axis=1)
+        best_index = np.argmin(distances)
         best_action = pareto_actions[best_index]
-        # print(objective_one[sorted_indices])
-        # print(objective_one[one_quarter_index])
-        # input("X")
 
-        # print(pareto_objectives[best_index]) #TO DO: All in cash or error due to no change?
-
-        #plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
+        if start_index == 0:
+            plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
         #Testing
 

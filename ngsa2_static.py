@@ -9,6 +9,7 @@ from config.constants import GARCH_BURN_IN_DAYS
 from rl_env import PortfolioEnv
 from rl_reward import RewardFunction, PureReturn
 from ngsa2_problem import PortfolioNSGA2StaticProblem
+from ngas2_utility import plot_pareto_front
 
 def run_nsga(env, pop_size=80, n_gen=50):
 
@@ -24,17 +25,6 @@ def run_nsga(env, pop_size=80, n_gen=50):
     )
 
     return res
-
-def plot_pareto_front(objective_one, objective_two):
-    plt.figure(figsize=(8,6))
-    plt.scatter(objective_one, objective_two, c='blue', label='Pareto Solutions')
-    plt.xlabel("Objective One")
-    plt.ylabel("Objective Two")
-    plt.title("Pareto Front")
-    plt.grid(True)
-
-    plt.legend()
-    plt.show()
 
 def train_and_test_one_static_ngsa2(render=False):
     try:
@@ -80,7 +70,7 @@ def train_and_test_one_static_ngsa2(render=False):
 
     print(pareto_objectives[best_index])
 
-    plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two)
+    plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
     #Testing
 
