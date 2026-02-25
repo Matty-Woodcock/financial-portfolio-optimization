@@ -7,7 +7,7 @@ from pymoo.optimize import minimize
 from price_data_reader_writer import load_or_update_price_data
 from config.constants import GARCH_BURN_IN_DAYS
 from rl_env import PortfolioEnv
-from rl_reward import RewardFunction, PureReturn
+from rl_reward import NGSA2
 from ngsa2_problem import PortfolioNSGA2StaticProblem
 from ngas2_utility import plot_pareto_front
 
@@ -48,9 +48,9 @@ def train_and_test_one_static_ngsa2(render=False):
     print(f"Evaluating on {len(eval_df)} days.") #246
     print(f"Testing on {len(test_df)} days.") #247
 
-    train_env = PortfolioEnv(train_df, PureReturn(), train_volatilities)
-    eval_env = PortfolioEnv(eval_df, PureReturn(), eval_volatilities)
-    test_env = PortfolioEnv(test_df, PureReturn(), test_volatilities)
+    train_env = PortfolioEnv(train_df, NGSA2(), train_volatilities)
+    eval_env = PortfolioEnv(eval_df, NGSA2(), eval_volatilities)
+    test_env = PortfolioEnv(test_df, NGSA2(), test_volatilities)
     
     #Training
 
@@ -78,7 +78,7 @@ def train_and_test_one_static_ngsa2(render=False):
     done = False
 
     while not done:
-        obs, _, done, _, info = test_env.step(best_action)
+        _, _, done, _, _ = test_env.step(best_action)
 
     ngsa2_metric_summaries = test_env.get_metric_summaries()
     #print(ngsa2_metric_summaries["portfolio_value"].aggregate, len(ngsa2_metric_summaries["portfolio_value"].series))

@@ -6,7 +6,7 @@ from pymoo.optimize import minimize
 from price_data_reader_writer import load_or_update_price_data
 from config.constants import GARCH_BURN_IN_DAYS
 from rl_env import PortfolioEnv
-from rl_reward import RewardFunction, PureReturn
+from rl_reward import NGSA2
 from ngsa2_problem import PortfolioNSGA2RollingProblem
 from ngas2_utility import plot_pareto_front
 
@@ -73,7 +73,7 @@ def train_and_test_one_ngsa2(render=False):
         train_window = test_df.iloc[start_index:train_end]
         test_window = test_df.iloc[train_end:test_end]
 
-        train_env = PortfolioEnv(train_window, PureReturn(), test_volatilities[start_index:train_end])
+        train_env = PortfolioEnv(train_window, NGSA2(), test_volatilities[start_index:train_end])
 
         if not initial_env:
             initial_weights = weights_history[-1]
@@ -109,14 +109,14 @@ def train_and_test_one_ngsa2(render=False):
         best_index = np.argmin(distances)
         best_action = pareto_actions[best_index]
 
-        if start_index == 0:
-            plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
+        # if start_index == 0:
+        #     plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
         #Testing
 
         test_prev_prices = train_window.iloc[-1].values 
 
-        test_env = PortfolioEnv(test_window, PureReturn(), test_volatilities[train_end:test_end])
+        test_env = PortfolioEnv(test_window, NGSA2(), test_volatilities[train_end:test_end])
 
         obs, _ = test_env.reset(observation=False, initial_portfolio_value=current_portfolio_value, initial_env=initial_env, prev_prices=test_prev_prices)
         if not initial_env:
@@ -125,7 +125,7 @@ def train_and_test_one_ngsa2(render=False):
         done = False
 
         while not done:
-            obs, _, done, _, info = test_env.step(best_action)
+            _, _, done, _, _ = test_env.step(best_action)
 
         test_metric_summaries = test_env.get_metric_summaries()
         test_length = len(test_window)

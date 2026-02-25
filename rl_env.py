@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric, calculate_sharpe_ratio
-from rl_reward import RewardFunction
+from rl_reward import RewardFunction, NGSA2
 from config.constants import ALL_SYMBOLS_WITH_CASH
 
 def format_weights(tickers, weights):
@@ -113,17 +113,19 @@ class PortfolioEnv(gym.Env):
         portfolio_return = np.dot(new_weights, asset_returns_with_cash)
         self.portfolio_value = portfolio_value_after_cost * (1 + portfolio_return)
 
-        reward = self.reward_function(
-            portfolio_value_before=portfolio_value_before_step,
-            portfolio_value_after=self.portfolio_value,
-            weights=new_weights,
-            prev_weights=self.weights,
-            turnover=turnover,
-            cost=self.cost,
-        )
+        if not isinstance(self.reward_function, NGSA2):
+            reward = self.reward_function(
+                portfolio_value_before=portfolio_value_before_step,
+                portfolio_value_after=self.portfolio_value,
+                weights=new_weights,
+                daily_volatilities = self.volatilities[self.current_step - self.window_size],
+                turnover=turnover,
+                cost=self.cost,
+            )
+        else:
+            reward = None
 
         portfolio_return = (self.portfolio_value - portfolio_value_before_step) / portfolio_value_before_step
-        # assert portfolio_return == reward
 
         self.current_step += 1
         done = self.current_step >= len(self.prices)
