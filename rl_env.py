@@ -212,6 +212,13 @@ class PortfolioEnv(gym.Env):
                 series = self.weights_history,
                 aggregate = None
             ),
+            "portfolio_returns": MetricSummary(
+                name="Portfolio Returns",
+                reward_function_name=self.reward_function.__class__.__name__,
+                direction=None,
+                series=self.portfolio_return_history,
+                aggregate=None
+            ),
             "ticker_prices": MetricSummary(
                 name = "Ticker Prices",
                 reward_function_name = self.reward_function.__class__.__name__,
