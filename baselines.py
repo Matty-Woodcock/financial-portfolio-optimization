@@ -1,7 +1,7 @@
 import numpy as np
 
 from price_data_reader_writer import load_or_update_price_data
-from config.constants import ALL_SYMBOLS_WITH_CASH, GARCH_BURN_IN_DAYS
+from config.constants import ALL_SYMBOLS_WITH_CASH, GARCH_BURN_IN_DAYS, RL_WINDOW_SIZE
 
 def main():
     try:
@@ -15,7 +15,7 @@ def main():
     
     test_df = prices_df.iloc[eval_split_index:]
 
-    test_df_excluding_window_and_burn_in = test_df[39:] #This has been verified to be correct 
+    test_df_excluding_window_and_burn_in = test_df[RL_WINDOW_SIZE - 1:] #This has been verified to be correct 
 
     #Choose portfolio weights for baseline
     #["CASH", "AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ", "TLT", "GLD"]
@@ -26,7 +26,7 @@ def main():
     cash_returns = np.zeros((len(asset_returns), 1))
     asset_returns_with_cash = np.hstack([cash_returns, asset_returns.values])
     
-    assert len(asset_returns_with_cash) == 207
+    assert len(asset_returns_with_cash) == len(test_df) - RL_WINDOW_SIZE
 
     portfolio_returns = asset_returns_with_cash @ baseline_weights
     portfolio_values = (1 + portfolio_returns).cumprod()

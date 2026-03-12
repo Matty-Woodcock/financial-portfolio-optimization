@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-from config.constants import ALL_SYMBOLS, GARCH_BURN_IN_DAYS
+from config.constants import ALL_SYMBOLS, DATA_START, DATA_END
 
 load_dotenv()
 API_KEY = os.getenv("TIINGO_API_KEY")
@@ -34,17 +34,17 @@ def fetch_tiingo_price_data_for_symbol(symbol, start_date_dt, end_date_dt):
     
 
 def fetch_tiingo_price_data_for_all_symbols():
-    burn_in_start_date = datetime(2017, 6, 2)
+    #burn_in_start_date = datetime(2017, 6, 2)
     #rl_start_date = datetime(2018, 6, 1)
-    end_date = datetime(2024, 12, 6)
+    #end_date = datetime(2024, 12, 6)
     #ALL_SYMBOLS = ["AAPL"]
 
     try:
-        price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, burn_in_start_date, end_date) for symbol in ALL_SYMBOLS}, axis=1)
+        price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, DATA_START, DATA_END) for symbol in ALL_SYMBOLS}, axis=1)
     except ValueError as error:
         raise error
     
-    assert len(price_df) - 1642 == GARCH_BURN_IN_DAYS
+    #assert len(price_df) - 1642 == GARCH_BURN_IN_DAYS
     
     return price_df
 

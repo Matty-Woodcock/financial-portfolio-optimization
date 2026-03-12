@@ -8,7 +8,7 @@ from rl_main import train_and_test_one_policy
 from ngsa2_main import train_and_test_one_ngsa2
 from ngsa2_static import train_and_test_one_static_ngsa2
 from rl_reward import PureReturn, LogReturn, HighHHI, LowVolatility
-from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH
+from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH, RL_WINDOW_SIZE
 from test_metrics_calculator import bootstrap_sharpe_test
 
 def extract_aggregates(policy_metric_summaries):
@@ -79,12 +79,12 @@ def main():
                         LowVolatility(volatility_in_observation_space=True),]
     #reward_functions = [PureReturn()]
 
-    for i in range(0):
+    for i in range(1):
         for reward_function in reward_functions:
             policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
-            assert len(policy_metric_summaries["portfolio_value"].series) == 207
+            #assert len(policy_metric_summaries["portfolio_value"].series) == 207
 
     ngsa2_rolling_metric_summaries = train_and_test_one_ngsa2()
     all_policy_metric_summaries.append(ngsa2_rolling_metric_summaries)
@@ -102,24 +102,22 @@ def main():
     print(f"95% CI:             ({rolling_bootstrap['ci_95'][0]:.3f}, {rolling_bootstrap['ci_95'][1]:.3f})")
     print(f"P-value (H0: SR≤0): {rolling_bootstrap['p_value']:.3f}")
 
-    static_bootstrap = bootstrap_sharpe_test(
-        ngsa2_static_metric_summaries["portfolio_returns"].series
-    )
-    print(f"\n--- Static NSGA-II Bootstrap Results ---")
-    print(f"Observed Sharpe:    {static_bootstrap['observed_sharpe']:.3f}")
-    print(f"95% CI:             ({static_bootstrap['ci_95'][0]:.3f}, {static_bootstrap['ci_95'][1]:.3f})")
-    print(f"P-value (H0: SR≤0): {static_bootstrap['p_value']:.3f}")
+    # static_bootstrap = bootstrap_sharpe_test(
+    #     ngsa2_static_metric_summaries["portfolio_returns"].series
+    # )
+    # print(f"\n--- Static NSGA-II Bootstrap Results ---")
+    # print(f"Observed Sharpe:    {static_bootstrap['observed_sharpe']:.3f}")
+    # print(f"95% CI:             ({static_bootstrap['ci_95'][0]:.3f}, {static_bootstrap['ci_95'][1]:.3f})")
+    # print(f"P-value (H0: SR≤0): {static_bootstrap['p_value']:.3f}")
 
-    print("\nLength Rolling EA:", len(ngsa2_rolling_metric_summaries["portfolio_value"].series))
-    print(f"Length Static EA: {len(ngsa2_static_metric_summaries["portfolio_value"].series)}\n")
-    assert len(ngsa2_static_metric_summaries["portfolio_value"].series) == 207
+    # print("\nLength Rolling EA:", len(ngsa2_rolling_metric_summaries["portfolio_value"].series))
+    # print(f"Length Static EA: {len(ngsa2_static_metric_summaries["portfolio_value"].series)}\n")
     
     directions = [
         all_policy_metric_summaries[0]["portfolio_value"].direction,
         all_policy_metric_summaries[0]["hhi"].direction,
         all_policy_metric_summaries[0]["mdd"].direction
     ]
-
     print(all_policy_metric_aggregates)
 
     pareto_front_policy_indicies = moo(all_policy_metric_aggregates, directions)
@@ -138,7 +136,7 @@ def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     pareto_front_counter = 0
-
+        
     all_portfolio_values = [p["portfolio_value"].series for p in pareto_front_policy_metric_summaries]
     all_rolling_volatilities = [rolling_volatility_calculator(p["portfolio_value"].series) for p in pareto_front_policy_metric_summaries]
     all_hhi = [p["hhi"].series for p in pareto_front_policy_metric_summaries[:-1]]
@@ -149,6 +147,8 @@ def main():
     vol_max = max(max(v) for v in all_rolling_volatilities)
 
     for policy_metric_summaries in pareto_front_policy_metric_summaries: #TO DO: Change this back to pareto_front_policy_metric_summaries
+        policy_bootstrap_results = bootstrap_sharpe_test(policy_metric_summaries["portfolio_returns"].series)
+
         fig, axes = plt.subplots(
             nrows=3,
             ncols=1,
@@ -195,6 +195,34 @@ def main():
         ax2.set_ylabel("HHI (Dotted) & Rolling Annualised Volatility (Red)")
 
         ax1.set_ylim([pv_min * 0.95, pv_max * 1.05])
+
+        p_value = policy_bootstrap_results["p_value"]
+        ci_low, ci_high = policy_bootstrap_results["ci_95"]
+
+        #Colour the p-value green/orange/red depending on significance
+        if p_value < 0.05:
+            p_color = "green"
+        elif p_value < 0.10:
+            p_color = "orange"
+        else:
+            p_color = "red"
+
+        stats_text = (
+            f"observed sharpe: {policy_bootstrap_results["observed_sharpe"]:.4f}\n" #TO DO: REMOVE
+            f"p-value: {p_value:.3f}\n"
+            f"95% CI: ({ci_low:.2f}, {ci_high:.2f})\n"
+            f"H₀: Sharpe Ratio ≤ 0"
+        )
+
+        ax1.text(
+            0.015, 0.95, #Top-left of axes
+            stats_text,
+            transform=ax1.transAxes,
+            fontsize=10,
+            verticalalignment="top",
+            bbox=dict(boxstyle="round,pad=0.4", facecolor=p_color, alpha=0.15)
+        )
+
         ax2.set_ylim([0.0, max(hhi_max, vol_max) * 1.03])
 
         rounded_return = round(policy_metric_summaries['portfolio_value'].aggregate, 3)
@@ -229,7 +257,7 @@ def main():
 
         #Ticker Prices
 
-        prices = policy_metric_summaries["ticker_prices"].series[39:] #Prices in initial observation window are discarded 39:
+        prices = policy_metric_summaries["ticker_prices"].series[RL_WINDOW_SIZE - 1:] #Prices in initial observation window are discarded 39:
         prices_norm = prices / prices[0]
 
         ax_p = axes[2]
@@ -262,7 +290,6 @@ if __name__ == "__main__":
 
 #TO DO
 #1. Satistical significance
-#2. Out-of-sample performance
 #2. Get actual risk free rate?
 #3. Elitist RL approach
 #4. DCC-GARCH?

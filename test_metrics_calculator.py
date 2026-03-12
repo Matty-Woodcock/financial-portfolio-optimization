@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 
 from dataclasses import dataclass
 from arch.bootstrap import CircularBlockBootstrap
+from rf_rate_reader import get_daily_rf, RF_DAILY_SERIES
 
 @dataclass
 class MetricSummary:
@@ -28,18 +29,29 @@ def calculate_mdd_metric(portfolio_value_history): #TO DO: Implement Vectorizati
         mdd_history.append((daily_portfolio_value - peak_porfolio_value) / peak_porfolio_value)
     return mdd_history, min(mdd_history)
 
-def calculate_sharpe_ratio(portfolio_return_history):
+# def calculate_sharpe_ratio(portfolio_return_history):
+#     returns = np.array(portfolio_return_history)
+
+#     rf_annual = 0.03
+#     trading_days = 252
+
+#     rf_daily = (1 + rf_annual)**(1 / trading_days) - 1
+#     excess = returns - rf_daily
+
+#     sharpe_ratio = (excess.mean()/ excess.std(ddof=1)) * np.sqrt(trading_days)
+
+#     return sharpe_ratio
+
+def calculate_sharpe_ratio(portfolio_return_history, dates = None):
     returns = np.array(portfolio_return_history)
 
-    rf_annual = 0.03
-    trading_days = 252
+    if dates is not None and len(dates) == len(returns): #TO DO: Needs fixing
+        rf_daily = np.array([get_daily_rf(date) for date in dates])
+    else:
+        rf_daily = RF_DAILY_SERIES["2023":"2025"].mean() #TO DO: Make it rely on configs
 
-    rf_daily = (1 + rf_annual)**(1 / trading_days) - 1
     excess = returns - rf_daily
-
-    sharpe_ratio = (excess.mean()/ excess.std(ddof=1)) * np.sqrt(trading_days)
-
-    return sharpe_ratio
+    return (excess.mean() / excess.std(ddof=1)) * np.sqrt(252)
 
 #TO DO: Review AI
 def bootstrap_sharpe_test(portfolio_return_history, n_bootstraps=1000, block_size=10):
@@ -50,17 +62,11 @@ def bootstrap_sharpe_test(portfolio_return_history, n_bootstraps=1000, block_siz
     """
     returns = np.array(portfolio_return_history)
 
-    def sharpe_from_bootstrap(x):
-        rf_annual = 0.03
-        rf_daily = (1 + rf_annual) ** (1 / 252) - 1
-        excess = x - rf_daily
-        return (excess.mean() / excess.std(ddof=1)) * np.sqrt(252)
-
     bs = CircularBlockBootstrap(block_size, returns)
-    bootstrap_sharpes = bs.apply(sharpe_from_bootstrap, n_bootstraps)
+    bootstrap_sharpes = bs.apply(calculate_sharpe_ratio, n_bootstraps)
 
-    observed_sharpe = sharpe_from_bootstrap(returns)
-    p_value = float(np.mean(bootstrap_sharpes <= 0))  # H0: Sharpe <= 0
+    observed_sharpe = calculate_sharpe_ratio(returns) #TO DO: Needs dates
+    p_value = float(np.mean(bootstrap_sharpes <= 0))  #H0: Sharpe <= 0
     ci_lower = float(np.percentile(bootstrap_sharpes, 2.5))
     ci_upper = float(np.percentile(bootstrap_sharpes, 97.5))
 

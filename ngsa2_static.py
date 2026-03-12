@@ -5,7 +5,7 @@ from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
 
 from price_data_reader_writer import load_or_update_price_data
-from config.constants import GARCH_BURN_IN_DAYS
+from config.constants import GARCH_BURN_IN_DAYS, TRAIN_SPLIT, EVAL_SPLIT, RL_WINDOW_SIZE
 from rl_env import PortfolioEnv
 from rl_reward import NGSA2
 from ngsa2_problem import PortfolioNSGA2StaticProblem
@@ -35,8 +35,8 @@ def train_and_test_one_static_ngsa2(render=False):
 
     #Indexing below confirmed to be correct
     burn_in_split_index = GARCH_BURN_IN_DAYS + 1 #Prices Length = Returns Length + 1
-    train_split_index = int(len(prices_df[burn_in_split_index:]) * 0.7) + burn_in_split_index
-    eval_split_index = int(len(prices_df[burn_in_split_index:]) * 0.85) + burn_in_split_index
+    train_split_index = int(len(prices_df[burn_in_split_index:]) * TRAIN_SPLIT) + burn_in_split_index
+    eval_split_index = int(len(prices_df[burn_in_split_index:]) * EVAL_SPLIT) + burn_in_split_index
     
     burn_in_df = prices_df[:burn_in_split_index]
     train_df = prices_df.iloc[burn_in_split_index:train_split_index]
@@ -81,7 +81,7 @@ def train_and_test_one_static_ngsa2(render=False):
         _, _, done, _, _ = test_env.step(best_action)
 
     ngsa2_metric_summaries = test_env.get_metric_summaries()
-    #print(ngsa2_metric_summaries["portfolio_value"].aggregate, len(ngsa2_metric_summaries["portfolio_value"].series))
+    assert len(ngsa2_metric_summaries["portfolio_value"].series) == len(test_df) - RL_WINDOW_SIZE
     return ngsa2_metric_summaries
 
 if __name__ == "__main__":

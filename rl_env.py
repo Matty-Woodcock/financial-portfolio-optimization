@@ -5,7 +5,7 @@ import pandas as pd
 
 from test_metrics_calculator import MetricSummary, calculate_hhi_metric, calculate_mdd_metric, calculate_sharpe_ratio
 from rl_reward import RewardFunction, NGSA2
-from config.constants import ALL_SYMBOLS_WITH_CASH
+from config.constants import ALL_SYMBOLS_WITH_CASH, RL_WINDOW_SIZE
 
 def format_weights(tickers, weights):
     formatted_weights = {}
@@ -17,7 +17,7 @@ def format_weights(tickers, weights):
 class PortfolioEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, prices: pd.DataFrame, reward_function: RewardFunction, volatilities, window_size=40, transaction_cost = 0.001):
+    def __init__(self, prices: pd.DataFrame, reward_function: RewardFunction, volatilities, window_size = RL_WINDOW_SIZE, transaction_cost = 0.001):
         super(PortfolioEnv, self).__init__()
 
         self.reward_function = reward_function
@@ -231,7 +231,10 @@ class PortfolioEnv(gym.Env):
                 reward_function_name = self.reward_function.__class__.__name__,
                 direction = None,
                 series = None,
-                aggregate = calculate_sharpe_ratio(self.portfolio_return_history)
+                aggregate= calculate_sharpe_ratio(
+                    self.portfolio_return_history,
+                    dates = self.dates[self.window_size:]
+                )
             ),
             "garch_volatility": MetricSummary(
                 name = self.reward_function.volatility_in_observation_space,

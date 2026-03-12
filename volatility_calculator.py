@@ -1,12 +1,12 @@
 import numpy as np
 
-from config.constants import GARCH_BURN_IN_DAYS
+from config.constants import GARCH_BURN_IN_DAYS, TRAIN_SPLIT, EVAL_SPLIT, RL_WINDOW_SIZE
 from garch_main import MultiAssetGARCH
 
 def volatility_calculator(prices_df):
     burn_in_split_price_index = GARCH_BURN_IN_DAYS + 1 #Prices Length = Returns Length + 1
-    train_split_price_index = int(len(prices_df[burn_in_split_price_index:]) * 0.7) + burn_in_split_price_index
-    eval_split_price_index = int(len(prices_df[burn_in_split_price_index:]) * 0.85) + burn_in_split_price_index
+    train_split_price_index = int(len(prices_df[burn_in_split_price_index:]) * TRAIN_SPLIT) + burn_in_split_price_index
+    eval_split_price_index = int(len(prices_df[burn_in_split_price_index:]) * EVAL_SPLIT) + burn_in_split_price_index
     
     burn_in_df = prices_df[:burn_in_split_price_index]
     train_df = prices_df.iloc[burn_in_split_price_index:train_split_price_index]
@@ -18,7 +18,6 @@ def volatility_calculator(prices_df):
     print(f"Evaluating on {len(eval_df)} days.") #246
     print(f"Testing on {len(test_df)} days.") #247
 
-    garch_window_size = GARCH_BURN_IN_DAYS + 40 #Subtract one from RL window size to account for returns rather than price
     returns_df = prices_df.pct_change().dropna()
 
     multi_asset_garch = MultiAssetGARCH(n_assets = returns_df.shape[1])
@@ -34,10 +33,10 @@ def volatility_calculator(prices_df):
     train_split_return_index = train_split_price_index - 1 #Returns Length = Prices Length - 1
     eval_split_return_index = eval_split_price_index - 1
 
-    train_volatilities = volatilities[GARCH_BURN_IN_DAYS + 40:train_split_return_index]
-    eval_volatilities  = volatilities[train_split_return_index + 40:eval_split_return_index]
-    test_volatilities  = volatilities[eval_split_return_index + 40:]
+    train_volatilities = volatilities[GARCH_BURN_IN_DAYS + RL_WINDOW_SIZE:train_split_return_index]
+    eval_volatilities  = volatilities[train_split_return_index + RL_WINDOW_SIZE:eval_split_return_index]
+    test_volatilities  = volatilities[eval_split_return_index + RL_WINDOW_SIZE:]
 
-    #TO DO: How to test this?
+    #TO DO: How to test this? Add assert with config variables
 
     return train_volatilities, eval_volatilities, test_volatilities

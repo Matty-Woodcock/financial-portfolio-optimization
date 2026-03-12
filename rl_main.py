@@ -1,7 +1,7 @@
 from rl_env import PortfolioEnv
 from rl_reward import RewardFunction, PureReturn
 from price_data_reader_writer import load_or_update_price_data
-from config.constants import GARCH_BURN_IN_DAYS
+from config.constants import GARCH_BURN_IN_DAYS,  TRAIN_SPLIT, EVAL_SPLIT, RL_WINDOW_SIZE
 
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3 import PPO
@@ -15,18 +15,13 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
 
     #Indexing below confirmed to be correct
     burn_in_split_index = GARCH_BURN_IN_DAYS + 1 #Prices Length = Returns Length + 1
-    train_split_index = int(len(prices_df[burn_in_split_index:]) * 0.7) + burn_in_split_index
-    eval_split_index = int(len(prices_df[burn_in_split_index:]) * 0.85) + burn_in_split_index
+    train_split_index = int(len(prices_df[burn_in_split_index:]) * TRAIN_SPLIT) + burn_in_split_index
+    eval_split_index = int(len(prices_df[burn_in_split_index:]) * EVAL_SPLIT) + burn_in_split_index
     
     burn_in_df = prices_df[:burn_in_split_index]
     train_df = prices_df.iloc[burn_in_split_index:train_split_index]
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
     test_df = prices_df.iloc[eval_split_index:]
-
-    # print(f"Burning in on {len(burn_in_df)} days.") #251
-    # print(f"Training on {len(train_df)} days.") #1148
-    # print(f"Evaluating on {len(eval_df)} days.") #246
-    # print(f"Testing on {len(test_df)} days.") #247
 
     train_env = PortfolioEnv(train_df, reward_function, train_volatilities)
     eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
@@ -44,9 +39,6 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
     print("Training Starting")
     model.learn(total_timesteps=20000, callback=callback)
     print("Training Complete")
-    
-    # print(f"Training GARCH Total Runtimes: {train_env.garch_average_runtimes}")
-    # print(f"Evaluation GARCH Total Runtimes: {eval_env.garch_average_runtimes}")
 
     print("\nLoading Best Model for Testing")
     best_model = PPO.load("./logs/best_model") #Automatically appends .zip
@@ -61,7 +53,7 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False):
         if render:
             test_env.render()
 
-    assert test_env.test_counter == 207
+    assert test_env.test_counter == len(test_df) - RL_WINDOW_SIZE
 
     return test_env.get_metric_summaries()
 
