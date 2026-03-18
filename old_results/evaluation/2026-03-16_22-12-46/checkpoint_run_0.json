@@ -1,0 +1,104 @@
+[
+  {
+    "RL-PureReturn": {
+      "final_return": 1.7043228924137395,
+      "sharpe_ratio": 1.1628628975491735,
+      "max_drawdown": -0.12353479901615494,
+      "mean_hhi": 0.12142324447631836,
+      "transaction_cost_pct": 5.237079356922987,
+      "bootstrap_p_value": 0.011,
+      "bootstrap_ci_low": 0.16021600934692473,
+      "bootstrap_ci_high": 2.402727532195619
+    },
+    "RL-LogReturn": {
+      "final_return": 1.7079159862492452,
+      "sharpe_ratio": 1.1701032970218994,
+      "max_drawdown": -0.1251012407290136,
+      "mean_hhi": 0.12133736163377762,
+      "transaction_cost_pct": 5.195077956373198,
+      "bootstrap_p_value": 0.012,
+      "bootstrap_ci_low": 0.16548795945316835,
+      "bootstrap_ci_high": 2.3357274451833865
+    },
+    "RL-HighHHI": {
+      "final_return": 1.366644031964941,
+      "sharpe_ratio": 0.38592893629724845,
+      "max_drawdown": -0.19246910747091303,
+      "mean_hhi": 0.5684886574745178,
+      "transaction_cost_pct": 15.59128239199358,
+      "bootstrap_p_value": 0.251,
+      "bootstrap_ci_low": -0.7147420736295977,
+      "bootstrap_ci_high": 1.5075884166798854
+    },
+    "RL-LowVolatility": {
+      "final_return": 1.6978185725988435,
+      "sharpe_ratio": 1.154613024894742,
+      "max_drawdown": -0.12417296369310168,
+      "mean_hhi": 0.12166226655244827,
+      "transaction_cost_pct": 5.263488380210827,
+      "bootstrap_p_value": 0.006,
+      "bootstrap_ci_low": 0.18895452655065365,
+      "bootstrap_ci_high": 2.2465519403001917
+    },
+    "RL-PureReturn+GARCH": {
+      "final_return": 1.4442351950457786,
+      "sharpe_ratio": 0.5506714549577516,
+      "max_drawdown": -0.20117466822179106,
+      "mean_hhi": 0.45577672123908997,
+      "transaction_cost_pct": 13.4221252035213,
+      "bootstrap_p_value": 0.204,
+      "bootstrap_ci_low": -0.6697847057334902,
+      "bootstrap_ci_high": 1.9255994627353579
+    },
+    "RL-LogReturn+GARCH": {
+      "final_return": 1.488774382510869,
+      "sharpe_ratio": 0.6192022752272838,
+      "max_drawdown": -0.2070319184073137,
+      "mean_hhi": 0.458698034286499,
+      "transaction_cost_pct": 13.44472009677772,
+      "bootstrap_p_value": 0.16,
+      "bootstrap_ci_low": -0.6236703572328124,
+      "bootstrap_ci_high": 1.9973274606811195
+    },
+    "RL-HighHHI+GARCH": {
+      "final_return": 1.3776145573856895,
+      "sharpe_ratio": 0.4262497679777199,
+      "max_drawdown": -0.18779329733687933,
+      "mean_hhi": 0.5382713079452515,
+      "transaction_cost_pct": 15.24671392257279,
+      "bootstrap_p_value": 0.216,
+      "bootstrap_ci_low": -0.6449249629779863,
+      "bootstrap_ci_high": 1.5733301782424476
+    },
+    "RL-LowVol+GARCH": {
+      "final_return": 1.4766768897833566,
+      "sharpe_ratio": 0.6128158323459555,
+      "max_drawdown": -0.21370456920458844,
+      "mean_hhi": 0.4436795115470886,
+      "transaction_cost_pct": 13.53957383293459,
+      "bootstrap_p_value": 0.187,
+      "bootstrap_ci_low": -0.6602154259825632,
+      "bootstrap_ci_high": 2.1060511270499855
+    },
+    "NSGA2-Rolling": {
+      "final_return": 1.6486910950551599,
+      "sharpe_ratio": 0.729847208753158,
+      "max_drawdown": -0.24465616491442876,
+      "mean_hhi": 0.5757531197261319,
+      "transaction_cost_pct": 4.734970083121432,
+      "bootstrap_p_value": 0.08,
+      "bootstrap_ci_low": -0.2732801454472725,
+      "bootstrap_ci_high": 1.787500685457105
+    },
+    "NSGA2-Static": {
+      "final_return": 1.2049810595763701,
+      "sharpe_ratio": 0.18775063802151049,
+      "max_drawdown": -0.1889628123960235,
+      "mean_hhi": 1.0,
+      "transaction_cost_pct": 0.0,
+      "bootstrap_p_value": 0.35,
+      "bootstrap_ci_low": -0.892407517054674,
+      "bootstrap_ci_high": 1.202022852495433
+    }
+  }
+]

@@ -1,0 +1,2 @@
+Method,N Runs,Return Mean,Return Std,Return Best,Sharpe Ratio Mean,Sharpe Ratio Std,Sharpe Ratio Best,Max Drawdown Mean,Max Drawdown Std,Max Drawdown Best,Mean HHI Mean,Mean HHI Std,Mean HHI Best,Txn Cost % Mean,Txn Cost % Std,Txn Cost % Best,Bootstrap p Mean,Bootstrap p Std,Bootstrap p Best
+RL-PureReturn,1,1.704323,0.000000,1.704323,1.162863,0.000000,1.162863,-0.123535,0.000000,-0.123535,0.121423,0.000000,0.121423,5.237079,0.000000,5.237079,0.014000,0.000000,0.014000

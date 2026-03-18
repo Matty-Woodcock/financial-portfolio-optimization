@@ -1,0 +1,14 @@
+[
+  {
+    "RL-PureReturn": {
+      "final_return": 1.7043228924137395,
+      "sharpe_ratio": 1.1628628975491735,
+      "max_drawdown": -0.12353479901615494,
+      "mean_hhi": 0.12142324447631836,
+      "transaction_cost_pct": 5.237079356922987,
+      "bootstrap_p_value": 0.014,
+      "bootstrap_ci_low": 0.13752399458089556,
+      "bootstrap_ci_high": 2.3057537248162068
+    }
+  }
+]

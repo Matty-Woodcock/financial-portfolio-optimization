@@ -1,0 +1,64 @@
+[
+  {
+    "seed": null,
+    "n_candidates": 8,
+    "pareto_front_size": 4,
+    "pareto_metrics": [
+      {
+        "final_return": 1.797882086081282,
+        "sharpe_ratio": 0.8803096818140409,
+        "max_drawdown": -0.22448783474442716,
+        "mean_hhi": 0.5886421203613281,
+        "transaction_cost_pct": 12.773383394978854,
+        "bootstrap_p_value": 0.061,
+        "bootstrap_ci_low": -0.30590438326611,
+        "bootstrap_ci_high": 2.046438728648222,
+        "reward_function": "PureReturn"
+      },
+      {
+        "final_return": 1.735945206000799,
+        "sharpe_ratio": 1.1801697261016946,
+        "max_drawdown": -0.139809730893652,
+        "mean_hhi": 0.08340299129486084,
+        "transaction_cost_pct": 0.308058204568072,
+        "bootstrap_p_value": 0.012,
+        "bootstrap_ci_low": 0.1531334942246862,
+        "bootstrap_ci_high": 2.3225938414821123,
+        "reward_function": "LogReturn"
+      },
+      {
+        "final_return": 1.7342937627128636,
+        "sharpe_ratio": 1.1771622641891353,
+        "max_drawdown": -0.14084550843168014,
+        "mean_hhi": 0.08337008208036423,
+        "transaction_cost_pct": 0.2850705339272621,
+        "bootstrap_p_value": 0.014,
+        "bootstrap_ci_low": 0.12493798832838537,
+        "bootstrap_ci_high": 2.3690045220794307,
+        "reward_function": "PureReturn"
+      },
+      {
+        "final_return": 1.4118706603620623,
+        "sharpe_ratio": 0.6016488198340297,
+        "max_drawdown": -0.12506912228500242,
+        "mean_hhi": 0.5473443865776062,
+        "transaction_cost_pct": 16.002945633832113,
+        "bootstrap_p_value": 0.152,
+        "bootstrap_ci_low": -0.6262662274298428,
+        "bootstrap_ci_high": 1.8159888886904114,
+        "reward_function": "HighHHI"
+      }
+    ],
+    "best_metrics": {
+      "final_return": 1.735945206000799,
+      "sharpe_ratio": 1.1801697261016946,
+      "max_drawdown": -0.139809730893652,
+      "mean_hhi": 0.08340299129486084,
+      "transaction_cost_pct": 0.308058204568072,
+      "bootstrap_p_value": 0.012,
+      "bootstrap_ci_low": 0.1531334942246862,
+      "bootstrap_ci_high": 2.3225938414821123,
+      "reward_function": "LogReturn"
+    }
+  }
+]

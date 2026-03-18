@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-03-17T02:45:31.202946",
+  "seeds": [
+    0
+  ],
+  "aggregate": {
+    "RL-PureReturn": {
+      "final_return": {
+        "mean": 1.4424040525987651,
+        "std": 0.0,
+        "best": 1.4424040525987651,
+        "best_run_idx": 0,
+        "n_valid": 1
+      },
+      "sharpe_ratio": {
+        "mean": 0.5529634717927744,
+        "std": 0.0,
+        "best": 0.5529634717927744,
+        "best_run_idx": 0,
+        "n_valid": 1
+      },
+      "max_drawdown": {
+        "mean": -0.1595130439165965,
+        "std": 0.0,
+        "best": -0.1595130439165965,
+        "best_run_idx": 0,
+        "n_valid": 1
+      },
+      "mean_hhi": {
+        "mean": 0.45716696977615356,
+        "std": 0.0,
+        "best": 0.45716696977615356,
+        "best_run_idx": 0,
+        "n_valid": 1
+      },
+      "transaction_cost_pct": {
+        "mean": 13.564291840796521,
+        "std": 0.0,
+        "best": 13.564291840796521,
+        "best_run_idx": 0,
+        "n_valid": 1
+      },
+      "bootstrap_p_value": {
+        "mean": 0.159,
+        "std": 0.0,
+        "best": 0.159,
+        "best_run_idx": 0,
+        "n_valid": 1
+      }
+    }
+  }
+}
