@@ -1,0 +1,2 @@
+Run,Seed,Pareto Front Size,Return,Sharpe Ratio,Max Drawdown,Mean HHI,Txn Cost %,Bootstrap p,Best Method
+0,,2,1.808136,1.276193,-0.182909,0.433369,12.045478,0.023000,LowVolatility(GARCH=True)

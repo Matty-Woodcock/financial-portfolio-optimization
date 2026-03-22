@@ -1,0 +1,2 @@
+N Valid Runs,Return Mean,Return Std,Return Best,Sharpe Ratio Mean,Sharpe Ratio Std,Sharpe Ratio Best,Max Drawdown Mean,Max Drawdown Std,Max Drawdown Best,Mean HHI Mean,Mean HHI Std,Mean HHI Best,Txn Cost % Mean,Txn Cost % Std,Txn Cost % Best,Bootstrap p Mean,Bootstrap p Std,Bootstrap p Best
+50,1.720781,0.179750,1.939408,1.242445,0.161043,1.879977,-0.155439,0.038559,-0.079229,0.318876,0.216779,0.402362,6.308031,6.858786,5.945813,0.022520,0.011292,0.000000

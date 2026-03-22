@@ -5,36 +5,46 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 
 from data.price_data_reader_writer import load_or_update_price_data
-from config.constants import ALL_SYMBOLS_WITH_CASH, GARCH_BURN_IN_DAYS, RL_WINDOW_SIZE, EVAL_SPLIT
+from config.constants import ALL_SYMBOLS_WITH_CASH, GARCH_BURN_IN_DAYS, TRAIN_SPLIT, EVAL_SPLIT
+from rl_approach.rl_reward import NGSA2
+from rl_approach.rl_env import PortfolioEnv
+from test_metrics_calculator import bootstrap_sharpe_test
 
 def main():
     try:
-        prices_df, _, _, _ = load_or_update_price_data()
+        prices_df, _, _, test_volatilities = load_or_update_price_data()
     except ValueError as error:
         print(f"Fetching Price Data Failed: {error}")
         return
 
     burn_in_split_index = GARCH_BURN_IN_DAYS + 1 #Prices Length = Returns Length + 1
+    train_split_index = int(len(prices_df[burn_in_split_index:]) * TRAIN_SPLIT) + burn_in_split_index
     eval_split_index = int(len(prices_df[burn_in_split_index:]) * EVAL_SPLIT) + burn_in_split_index
     
     test_df = prices_df.iloc[eval_split_index:]
+    test_env = PortfolioEnv(test_df, NGSA2(), test_volatilities)
 
-    test_df_excluding_window_and_burn_in = test_df[RL_WINDOW_SIZE - 1:] #This has been verified to be correct 
-
-    #Choose portfolio weights for baseline
-    #["CASH", "AAPL", "MSFT", "GOOGL", "AMZN", "SPY", "QQQ", "TLT", "GLD"]
-    baseline_weights = [1/len(ALL_SYMBOLS_WITH_CASH)] * len(ALL_SYMBOLS_WITH_CASH)
-    #baseline_weights = [0, 0, 0, 0, 0, 1, 0, 0, 0]
-
-    asset_returns = test_df_excluding_window_and_burn_in.pct_change().dropna()
-    cash_returns = np.zeros((len(asset_returns), 1))
-    asset_returns_with_cash = np.hstack([cash_returns, asset_returns.values])
+    baseline_weights = np.array([1/len(ALL_SYMBOLS_WITH_CASH)] * len(ALL_SYMBOLS_WITH_CASH))
     
-    assert len(asset_returns_with_cash) == len(test_df) - RL_WINDOW_SIZE
+    obs, _ = test_env.reset()
+    done = False
 
-    portfolio_returns = asset_returns_with_cash @ baseline_weights
-    portfolio_values = (1 + portfolio_returns).cumprod()
-    print(f"Equal Weight Return = {portfolio_values[-1]}")
+    while not done:
+        _, _, done, _, _ = test_env.step(baseline_weights) #TO DO: In some cases, the ratios wont't be preserved
+
+    baseline_metric_summaries = test_env.get_metric_summaries()
+
+    baseline_bootstrap_results = bootstrap_sharpe_test(baseline_metric_summaries["portfolio_returns"].series)
+
+    print(f"Final Portfolio Value = {baseline_metric_summaries["portfolio_value"].aggregate}")
+    print(f"Sharpe Ratio = {baseline_metric_summaries["sharpe_ratio"].aggregate}")
+    print(f"Max Drawdown = {baseline_metric_summaries["mdd"].aggregate}")
+    print(f"Mean HHI = {baseline_metric_summaries["hhi"].aggregate}")
+    print(f"Bootstrap p-value = {baseline_bootstrap_results["p_value"]}")
+    print(f"Bootstrap Confidence Interval = {baseline_bootstrap_results["ci_95"]}")
+
+    #TO DO: Observed sharped incorrectly 0.6% lower
+    #print(f"Bootstrap Observed Sharpe = {baseline_bootstrap_results["observed_sharpe"]}")
 
 if __name__ == "__main__":
     main()

@@ -23,13 +23,13 @@ class HighHHI(RewardFunction):
         return pure_return + alpha * np.sum(np.square(weights))
     
 class LowVolatility(RewardFunction):
-    def __call__(self, portfolio_value_before, portfolio_value_after, weights, daily_volatilities, alpha = 0.15, **kwargs):
+    def __call__(self, portfolio_value_before, portfolio_value_after, weights, daily_volatilities, alpha = 0.3, **kwargs):
         pure_return = (portfolio_value_after - portfolio_value_before) / portfolio_value_before
         daily_volatilities_with_cash = np.concatenate(([0], daily_volatilities))
         portfolio_variance = np.sum((weights ** 2) * (daily_volatilities_with_cash ** 2))
         return pure_return - alpha * portfolio_variance
     
-class NGSA2(RewardFunction):
+class NGSA2(RewardFunction): #TO DO: Fix name
     def __call__(self, **kwargs):
         raise NotImplementedError #No reward function for NGSA2
 

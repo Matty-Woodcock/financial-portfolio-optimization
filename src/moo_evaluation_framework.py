@@ -80,6 +80,32 @@ def run_one_seed(seed: int) -> dict | None:
             print(f"    FAILED {label}: {e}")
             traceback.print_exc()
             return None
+        
+    # --- Train NSGA2 Rolling ---
+    print(f"    Training NSGA2-Rolling...")
+    if seed:
+        set_global_seeds(seed)
+    try:
+        nsga2_rolling = train_and_test_one_ngsa2(seed=seed)
+        all_metric_summaries.append(nsga2_rolling)
+        all_aggregates.append(extract_aggregates(nsga2_rolling))
+    except Exception as e:
+        print(f"    FAILED NSGA2-Rolling: {e}")
+        traceback.print_exc()
+        return None
+
+    # --- Train NSGA2 Static ---
+    print(f"    Training NSGA2-Static...")
+    if seed:
+        set_global_seeds(seed)
+    try:
+        nsga2_static = train_and_test_one_static_ngsa2(seed=seed)
+        all_metric_summaries.append(nsga2_static)
+        all_aggregates.append(extract_aggregates(nsga2_static))
+    except Exception as e:
+        print(f"    FAILED NSGA2-Static: {e}")
+        traceback.print_exc()
+        return None
  
     directions = [
         all_metric_summaries[0]["portfolio_value"].direction,

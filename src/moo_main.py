@@ -77,12 +77,12 @@ def main():
     all_policy_metric_summaries = []
     all_policy_metric_aggregates = []
     
-    reward_functions = [PureReturn(), LogReturn(), HighHHI(), LowVolatility(),
-                        PureReturn(volatility_in_observation_space=True),
-                        LogReturn(volatility_in_observation_space=True),
-                        HighHHI(volatility_in_observation_space=True),
-                        LowVolatility(volatility_in_observation_space=True),]
-    #reward_functions = [PureReturn()]
+    # reward_functions = [PureReturn(), LogReturn(), HighHHI(), LowVolatility(),
+    #                     PureReturn(volatility_in_observation_space=True),
+    #                     LogReturn(volatility_in_observation_space=True),
+    #                     HighHHI(volatility_in_observation_space=True),
+    #                     LowVolatility(volatility_in_observation_space=True),]
+    reward_functions = [PureReturn()]
 
     for i in range(1):
         for reward_function in reward_functions:
@@ -91,9 +91,9 @@ def main():
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
             #assert len(policy_metric_summaries["portfolio_value"].series) == 207
 
-    ngsa2_rolling_metric_summaries = train_and_test_one_ngsa2()
-    all_policy_metric_summaries.append(ngsa2_rolling_metric_summaries)
-    all_policy_metric_aggregates.append(extract_aggregates(ngsa2_rolling_metric_summaries))
+    # ngsa2_rolling_metric_summaries = train_and_test_one_ngsa2()
+    # all_policy_metric_summaries.append(ngsa2_rolling_metric_summaries)
+    # all_policy_metric_aggregates.append(extract_aggregates(ngsa2_rolling_metric_summaries))
 
     ngsa2_static_metric_summaries = train_and_test_one_static_ngsa2()
     all_policy_metric_summaries.append(ngsa2_static_metric_summaries)
@@ -183,8 +183,7 @@ def main():
             alpha=0.8
         )
         rolling_volatility = all_rolling_volatilities[pareto_front_counter]
-        #print(len(rolling_volatility), len(policy_metric_summaries["portfolio_value"].series), len(policy_metric_summaries["hhi"].series))
-        # print(rolling_volatility)
+        print(len(policy_metric_summaries["portfolio_value"].series), len(policy_metric_summaries["hhi"].series))
         assert len(rolling_volatility) == len(policy_metric_summaries["portfolio_value"].series) == len(policy_metric_summaries["hhi"].series)
         ax2.plot(
             trading_days,

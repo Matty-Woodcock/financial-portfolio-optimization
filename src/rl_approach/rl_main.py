@@ -38,7 +38,7 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
                             deterministic=True, 
                             render=False)
 
-    model = PPO("MlpPolicy", train_env, verbose=1, ent_coef=0.005, seed=seed, device="cpu") #CPU is faster than GPU for this task
+    model = PPO("MlpPolicy", train_env, verbose=1, ent_coef=0.05, seed=seed, device="cpu") #CPU is faster than GPU for this task
 
     print("Training Starting")
     model.learn(total_timesteps=20000, callback=callback)

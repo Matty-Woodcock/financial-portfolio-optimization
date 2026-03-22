@@ -44,10 +44,10 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
     test_df = prices_df.iloc[eval_split_index:]
 
-    print(f"Burning in on {len(burn_in_df)} days.") #251
-    print(f"Training on {len(train_df)} days.") #1148
-    print(f"Evaluating on {len(eval_df)} days.") #246
-    print(f"Testing on {len(test_df)} days.") #247
+    # print(f"Burning in on {len(burn_in_df)} days.") #251
+    # print(f"Training on {len(train_df)} days.") #1148
+    # print(f"Evaluating on {len(eval_df)} days.") #246
+    # print(f"Testing on {len(test_df)} days.") #247
 
     train_env = PortfolioEnv(train_df, NGSA2(), train_volatilities)
     eval_env = PortfolioEnv(eval_df, NGSA2(), eval_volatilities)
@@ -82,7 +82,7 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
 
     # print(pareto_objectives[best_index])
 
-    plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
+    # plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
     #Testing
 

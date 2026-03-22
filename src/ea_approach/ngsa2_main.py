@@ -43,10 +43,10 @@ def train_and_test_one_ngsa2(render=False, seed=None):
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
     test_df = prices_df.iloc[eval_split_index:]
 
-    print(f"Burning in on {len(burn_in_df)} days.") #251
-    print(f"Training on {len(train_df)} days.") #1148
-    print(f"Evaluating on {len(eval_df)} days.") #246
-    print(f"Testing on {len(test_df)} days.") #247
+    # print(f"Burning in on {len(burn_in_df)} days.") #251
+    # print(f"Training on {len(train_df)} days.") #1148
+    # print(f"Evaluating on {len(eval_df)} days.") #246
+    # print(f"Testing on {len(test_df)} days.") #247
 
     #Configuration
 
@@ -110,8 +110,8 @@ def train_and_test_one_ngsa2(render=False, seed=None):
         best_index = np.argmin(distances)
         best_action = pareto_actions[best_index]
 
-        if start_index == 0:
-            plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
+        # if start_index == 0:
+        #     plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
         #Testing
 

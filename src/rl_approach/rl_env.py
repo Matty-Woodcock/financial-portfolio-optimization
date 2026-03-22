@@ -66,6 +66,7 @@ class PortfolioEnv(gym.Env):
         norm = window / (window[0] + 1e-8) - 1.0
 
         observation = np.concatenate([norm.flatten(), self.weights])
+        #observation = norm.flatten()
 
         if self.reward_function.volatility_in_observation_space:
             daily_volatilities = self.volatilities[self.current_step - self.window_size]
