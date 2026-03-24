@@ -9,10 +9,10 @@ import os
 
 from datetime import datetime
 
-from rl_approach.rl_main import train_and_test_one_policy
+from rl_approach.rl_main import train_and_test_one_policy, train_and_test_one_policy_dcc
 from ea_approach.ngsa2_main import train_and_test_one_ngsa2
 from ea_approach.ngsa2_static import train_and_test_one_static_ngsa2
-from rl_approach.rl_reward import PureReturn, LogReturn, HighHHI, LowVolatility
+from rl_approach.rl_reward import PureReturn, LogReturn, HighHHI, LowVolatility, LowVolatilityDCC
 from config.constants import ALL_SYMBOLS, ALL_SYMBOLS_WITH_CASH, RL_WINDOW_SIZE
 from test_metrics_calculator import bootstrap_sharpe_test
 
@@ -81,12 +81,20 @@ def main():
     #                     PureReturn(volatility_in_observation_space=True),
     #                     LogReturn(volatility_in_observation_space=True),
     #                     HighHHI(volatility_in_observation_space=True),
-    #                     LowVolatility(volatility_in_observation_space=True),]
-    reward_functions = [PureReturn()]
+    #                     LowVolatility(volatility_in_observation_space=True),
+    #                     LowVolatilityDCC(),
+    #                     LowVolatilityDCC(dcc_in_observation_space=True)]
+    reward_functions = [LowVolatility(volatility_in_observation_space=True),
+                        LowVolatilityDCC(),
+                        LowVolatilityDCC(dcc_in_observation_space=True)]
+    # reward_functions = [PureReturn()]
 
     for i in range(1):
         for reward_function in reward_functions:
-            policy_metric_summaries = train_and_test_one_policy(reward_function)
+            if isinstance(reward_function, LowVolatilityDCC):
+                policy_metric_summaries = train_and_test_one_policy_dcc(reward_function)
+            else:
+                policy_metric_summaries = train_and_test_one_policy(reward_function)
             all_policy_metric_summaries.append(policy_metric_summaries)
             all_policy_metric_aggregates.append(extract_aggregates(policy_metric_summaries))
             #assert len(policy_metric_summaries["portfolio_value"].series) == 207
@@ -296,8 +304,7 @@ if __name__ == "__main__":
 #TO DO
 #1. Satistical significance
 #2. Don't use MDD in NGSA-2?
-#2. Remove XOM & BA?
-#4. DCC-GARCH?
+#3. DCC-GARCH?
 
 #[np.float64(1.1005400115336867), np.float64(1.0653347873779786), np.float64(1.0739545460619913), np.float64(1.0893033098977247), np.float64(1.087608475800012), np.float64(1.0867396581242237), np.float64(1.1137366773873456), np.float64(1.071185103310227), np.float64(0.9973951386100808), np.float64(0.967510795589207), np.float64(0.96511207172244), np.float64(0.9629288624415098), np.float64(0.9879293326827104), np.float64(0.9889782013844942), np.float64(0.9782271599951061), np.float64(1.00180502439772), np.float64(1.0006796758967038), np.float64(1.0460907500982408), np.float64(1.0542403944296377), np.float64(1.0570012477036308), np.float64(1.0385678373258074), np.float64(1.0461187121885012), np.float64(1.0318316068170306), np.float64(1.0407772040628436), np.float64(1.0318392920137198), np.float64(1.023139513306916), np.float64(1.0093710070897748), np.float64(1.017803161344673), np.float64(1.0421147941874171), np.float64(0.999743161137668), np.float64(0.9971694826374349), np.float64(1.0082342417196657), np.float64(0.9754085843470889), np.float64(1.002819544812224), np.float64(1.0074715721587142), np.float64(1.0261210845123192), np.float64(1.0377681859449484), np.float64(1.0185409058255461), np.float64(1.0101782522601495), np.float64(1.0185432753359942), np.float64(1.0133671483438522), np.float64(1.0218379855402304), np.float64(1.0228612794269474), np.float64(1.0386959208594313), np.float64(1.03741884120459), np.float64(1.0222463955059828), np.float64(1.0256754641190216), np.float64(1.0218262307027572), np.float64(1.00408750856496), np.float64(1.0072783038773476), np.float64(0.9768639574467901), np.float64(0.9671401691593584), np.float64(0.9836342995522797), np.float64(0.9773416393639615), np.float64(0.9799559053499967), np.float64(0.9690281211689322), np.float64(0.9596805658254094), np.float64(0.9727640095442435), np.float64(0.9724196546617683), np.float64(0.9882299759828763), np.float64(0.9935651553849862), np.float64(0.9960581015150363), np.float64(1.0008856454025588), np.float64(1.019301571804504), np.float64(1.0193604997963421), np.float64(1.000225255139941), np.float64(0.9945078233910798), np.float64(0.9955265381786569), np.float64(0.9848221646578842), np.float64(0.9938452314256604), np.float64(0.9925346739662014), np.float64(0.9675577930886489), np.float64(0.9795248462383346), np.float64(0.9795966743338745), np.float64(0.9692318646446427), np.float64(0.9528668624993331), np.float64(0.9750280634220941), np.float64(0.9763006492256561), np.float64(0.9606611725670379), np.float64(0.947477976790869), np.float64(0.9308622707634762), np.float64(0.9296096083389758), np.float64(0.9312024433293552), np.float64(0.9502384848560537), np.float64(0.9572428319636505), np.float64(0.960530083995319), np.float64(0.9514315897514359), np.float64(0.9746613060432667), np.float64(0.9900453745127463), np.float64(0.9862548047476646), np.float64(0.9916951320765333), np.float64(1.006618015706152), np.float64(1.0133745580622842), np.float64(1.0136879543576325), np.float64(1.02551789406247), np.float64(1.0195993348817136), np.float64(1.0102021679165514)]
 

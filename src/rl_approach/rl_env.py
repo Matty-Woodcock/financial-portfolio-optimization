@@ -21,11 +21,12 @@ def format_weights(tickers, weights):
 class PortfolioEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, prices: pd.DataFrame, reward_function: RewardFunction, volatilities, window_size = RL_WINDOW_SIZE, transaction_cost = 0.001):
+    def __init__(self, prices: pd.DataFrame, reward_function: RewardFunction, volatilities, covariances = None, window_size = RL_WINDOW_SIZE, transaction_cost = 0.001):
         super(PortfolioEnv, self).__init__()
 
         self.reward_function = reward_function
         self.volatilities = volatilities
+        self.covariances = covariances
 
         self.prices = prices.values  # shape (T, 2)
         self.dates = prices.index
@@ -48,6 +49,9 @@ class PortfolioEnv(gym.Env):
             observation_space_shape = (window_size + 1) * (self.n_assets - 1) + self.n_assets
         else:
             observation_space_shape = (window_size) * (self.n_assets - 1) + self.n_assets
+        if self.reward_function.dcc_in_observation_space:
+            n_risky = self.n_assets - 1
+            observation_space_shape += n_risky * (n_risky - 1) // 2  # upper triangle of R_t (no diagonal)
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(observation_space_shape,), dtype=np.float32
         )
@@ -71,6 +75,18 @@ class PortfolioEnv(gym.Env):
         if self.reward_function.volatility_in_observation_space:
             daily_volatilities = self.volatilities[self.current_step - self.window_size]
             observation = np.concatenate([observation, daily_volatilities])
+
+        if self.reward_function.dcc_in_observation_space and self.covariances is not None:
+            cov = self.covariances[self.current_step - self.window_size]
+            if not np.any(np.isnan(cov)):
+                std = np.sqrt(np.maximum(np.diag(cov), 1e-10))
+                corr = cov / np.outer(std, std)
+                np.fill_diagonal(corr, 1.0)
+                n = corr.shape[0]
+                observation = np.concatenate([observation, corr[np.triu_indices(n, k=1)]])
+            else:
+                n_risky = self.n_assets - 1
+                observation = np.concatenate([observation, np.zeros(n_risky * (n_risky - 1) // 2)])
 
         return observation.astype(np.float32)    
     
@@ -121,6 +137,7 @@ class PortfolioEnv(gym.Env):
                 portfolio_value_after=self.portfolio_value,
                 weights=new_weights,
                 daily_volatilities = self.volatilities[self.current_step - self.window_size],
+                daily_covariance = self.covariances[self.current_step - self.window_size] if self.covariances is not None else None,
                 turnover=turnover,
                 cost=self.cost,
             )

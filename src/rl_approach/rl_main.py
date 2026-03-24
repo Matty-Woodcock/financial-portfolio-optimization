@@ -64,6 +64,58 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
 if __name__ == "__main__":
     train_and_test_one_policy(PureReturn(), render=True)
 
+
+def train_and_test_one_policy_dcc(reward_function: RewardFunction, render=False, seed=None):
+    """Identical to train_and_test_one_policy but loads DCC covariance matrices."""
+    from data.price_data_reader_writer import load_or_update_dcc_data
+
+    try:
+        prices_df, train_volatilities, eval_volatilities, test_volatilities, train_covariances, eval_covariances, test_covariances = load_or_update_dcc_data()
+    except ValueError as error:
+        print(f"Fetching DCC Data Failed: {error}")
+        return
+
+    burn_in_split_index = GARCH_BURN_IN_DAYS + 1
+    train_split_index = int(len(prices_df[burn_in_split_index:]) * TRAIN_SPLIT) + burn_in_split_index
+    eval_split_index = int(len(prices_df[burn_in_split_index:]) * EVAL_SPLIT) + burn_in_split_index
+
+    train_df = prices_df.iloc[burn_in_split_index:train_split_index]
+    eval_df  = prices_df.iloc[train_split_index:eval_split_index]
+    test_df  = prices_df.iloc[eval_split_index:]
+
+    train_env = PortfolioEnv(train_df, reward_function, train_volatilities, covariances=train_covariances)
+    eval_env  = PortfolioEnv(eval_df,  reward_function, eval_volatilities,  covariances=eval_covariances)
+    test_env  = PortfolioEnv(test_df,  reward_function, test_volatilities,  covariances=test_covariances)
+
+    callback = EvalCallback(eval_env,
+                            best_model_save_path='./logs/',
+                            log_path='./logs/',
+                            eval_freq=2000,
+                            deterministic=True,
+                            render=False)
+
+    model = PPO("MlpPolicy", train_env, verbose=1, ent_coef=0.05, seed=seed, device="cpu")
+
+    print("Training Starting")
+    model.learn(total_timesteps=20000, callback=callback)
+    print("Training Complete")
+
+    print("\nLoading Best Model for Testing")
+    best_model = PPO.load("./logs/best_model")
+
+    print("\nTesting Best Model")
+    obs, info = test_env.reset()
+    done = False
+
+    while not done:
+        action, _states = best_model.predict(obs, deterministic=True)
+        obs, reward, done, truncated, info = test_env.step(action)
+        if render:
+            test_env.render()
+
+    assert test_env.test_counter == len(test_df) - RL_WINDOW_SIZE
+    return test_env.get_metric_summaries()
+
 #First trading day of test period
 # [ 45.03986489  99.90579164  62.17089817  90.8635     250.31431039
 #  168.9674853   96.64447269 115.83        36.65840437 347.12888221

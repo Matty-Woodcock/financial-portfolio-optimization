@@ -1,3 +1,7 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import numpy as np
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
@@ -43,10 +47,10 @@ def train_and_test_one_ngsa2(render=False, seed=None):
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
     test_df = prices_df.iloc[eval_split_index:]
 
-    # print(f"Burning in on {len(burn_in_df)} days.") #251
-    # print(f"Training on {len(train_df)} days.") #1148
-    # print(f"Evaluating on {len(eval_df)} days.") #246
-    # print(f"Testing on {len(test_df)} days.") #247
+    print(f"Burning in on {len(burn_in_df)} days.") #251
+    print(f"Training on {len(train_df)} days.") #1148
+    print(f"Evaluating on {len(eval_df)} days.") #246
+    print(f"Testing on {len(test_df)} days.") #247
 
     #Configuration
 

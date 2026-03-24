@@ -12,7 +12,7 @@ from datetime import datetime
 import numpy as np
 import torch
  
-from rl_approach.rl_reward import PureReturn, LogReturn, HighHHI, LowVolatility
+from rl_approach.rl_reward import PureReturn, LogReturn, HighHHI, LowVolatility, LowVolatilityDCC
 from test_metrics_calculator import bootstrap_sharpe_test
  
  
@@ -27,18 +27,19 @@ def set_global_seeds(seed: int):
  
  
 METHODS = [
-    ("RL-PureReturn",         "rl", lambda: PureReturn()),
-    # ("RL-LogReturn",          "rl", lambda: LogReturn()),
-    # ("RL-HighHHI",            "rl", lambda: HighHHI()),
-    # ("RL-LowVolatility",      "rl", lambda: LowVolatility()),
-    # ("RL-PureReturn+GARCH",   "rl", lambda: PureReturn(volatility_in_observation_space=True)),
-    # ("RL-LogReturn+GARCH",    "rl", lambda: LogReturn(volatility_in_observation_space=True)),
-    # ("RL-HighHHI+GARCH",      "rl", lambda: HighHHI(volatility_in_observation_space=True)),
-    # ("RL-LowVol+GARCH",       "rl", lambda: LowVolatility(volatility_in_observation_space=True)),
-    # ("NSGA2-Rolling",         "nsga2_rolling", None),
-    # ("NSGA2-Static",          "nsga2_static",  None),
+    # ("RL-LowVolatility",         "rl",     lambda: LowVolatility()),
+    # ("RL-LowVolatilityDCC",         "rl_dcc",     lambda: LowVolatilityDCC()),
+    # ("RL-PureReturn+GARCH",      "rl",     lambda: PureReturn(volatility_in_observation_space=True)),
+    ("RL-LogReturn+GARCH",       "rl",     lambda: LogReturn(volatility_in_observation_space=True)),
+    # ("RL-HighHHI+GARCH",         "rl",     lambda: HighHHI(volatility_in_observation_space=True)),
+    ("RL-LowVol+GARCH",          "rl",     lambda: LowVolatility(volatility_in_observation_space=True)),
+    # ("RL-LowVolDCC+GARCH",          "rl_dcc",     lambda: LowVolatilityDCC(volatility_in_observation_space=True)),
+    # ("RL-PureReturn+DCCGARCH",   "rl_dcc", lambda: PureReturn(dcc_in_observation_space=True)),
+    ("RL-LogReturn+DCCGARCH",    "rl_dcc", lambda: LogReturn(dcc_in_observation_space=True)),
+    # ("RL-HighHHI+DCCGARCH",      "rl_dcc", lambda: HighHHI(dcc_in_observation_space=True)),
+    ("RL-LowVol+DCCGARCH",       "rl_dcc", lambda: LowVolatility(dcc_in_observation_space=True)),
+    # ("RL-LowVolDCC+DCCGARCH",       "rl_dcc", lambda: LowVolatilityDCC(dcc_in_observation_space=True)),
 ]
- 
  
 METRIC_LABELS = {
     "final_return":         ("Return",        "↑"),
@@ -72,7 +73,7 @@ def extract_metrics(metric_summaries: dict) -> dict:
  
  
 def run_one_seed(seed: int, skip_rl: bool = False) -> dict:
-    from rl_approach.rl_main import train_and_test_one_policy
+    from rl_approach.rl_main import train_and_test_one_policy, train_and_test_one_policy_dcc
     from ea_approach.ngsa2_main import train_and_test_one_ngsa2
     from ea_approach.ngsa2_static import train_and_test_one_static_ngsa2
  
@@ -91,6 +92,8 @@ def run_one_seed(seed: int, skip_rl: bool = False) -> dict:
         try:
             if method_tag == "rl":
                 metric_summaries = train_and_test_one_policy(reward_factory(), seed=seed)
+            elif method_tag == "rl_dcc":
+                metric_summaries = train_and_test_one_policy_dcc(reward_factory(), seed=seed)
             elif method_tag == "nsga2_rolling":
                 metric_summaries = train_and_test_one_ngsa2(seed=seed)
             elif method_tag == "nsga2_static":
@@ -239,7 +242,7 @@ def save_csv_table(aggregate: dict, output_dir: str):
  
  
 def main():
-    N_RUNS  = 10
+    N_RUNS  = 200
     SKIP_RL = False
     # SEEDS   = list(range(N_RUNS))
     SEEDS  = [None] * N_RUNS
