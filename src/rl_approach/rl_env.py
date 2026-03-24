@@ -121,8 +121,6 @@ class PortfolioEnv(gym.Env):
                 portfolio_value_after=self.portfolio_value,
                 weights=new_weights,
                 daily_volatilities = self.volatilities[self.current_step - self.window_size],
-                turnover=turnover,
-                cost=self.cost,
             )
         else:
             reward = None
