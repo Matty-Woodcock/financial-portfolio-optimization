@@ -51,8 +51,7 @@ METRIC_LABELS = {
  
  
 def extract_metrics(metric_summaries: dict) -> dict:
-    returns = metric_summaries["portfolio_returns"].series
-    bootstrap = bootstrap_sharpe_test(returns)
+    bootstrap = bootstrap_sharpe_test(metric_summaries["portfolio_returns"].series, dates = metric_summaries["portfolio_dates"].series)
  
     reward_fn = metric_summaries["portfolio_value"].reward_function_name
     garch = metric_summaries["garch_volatility"].name

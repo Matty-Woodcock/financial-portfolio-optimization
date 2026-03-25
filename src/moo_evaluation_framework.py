@@ -13,7 +13,7 @@ import numpy as np
 import torch
  
 from rl_approach.rl_reward import PureReturn, LogReturn, HighHHI, LowVolatility
-from test_metrics_calculator import bootstrap_sharpe_test
+from test_metrics_calculator import bootstrap_sharpe_test, bootstrap_sharpe_baseline_test
 from moo_main import extract_aggregates, moo
  
  
@@ -29,22 +29,27 @@ def set_global_seeds(seed: int):
  
 def extract_metrics(metric_summaries: dict) -> dict:
     returns = metric_summaries["portfolio_returns"].series
-    bootstrap = bootstrap_sharpe_test(returns)
- 
+    bootstrap = bootstrap_sharpe_test(returns, dates = metric_summaries["portfolio_dates"].series)
+    bootstrap_baseline = bootstrap_sharpe_baseline_test(returns, dates = metric_summaries["portfolio_dates"].series)
+
     garch = metric_summaries["garch_volatility"].name
     reward_fn = metric_summaries["portfolio_value"].reward_function_name
- 
+
     return {
-        "final_return":         float(metric_summaries["portfolio_value"].aggregate),
-        "sharpe_ratio":         float(metric_summaries["sharpe_ratio"].aggregate),
-        "max_drawdown":         float(metric_summaries["mdd"].aggregate),
-        "mean_hhi":             float(metric_summaries["hhi"].aggregate),
-        "transaction_cost_pct": float(metric_summaries["transaction_cost_percentage"].aggregate),
-        "bootstrap_p_value":    float(bootstrap["p_value"]),
-        "bootstrap_ci_low":     float(bootstrap["ci_95"][0]),
-        "bootstrap_ci_high":    float(bootstrap["ci_95"][1]),
-        "reward_function":      reward_fn,
-        "garch_volatility":     bool(garch),
+        "final_return":              float(metric_summaries["portfolio_value"].aggregate),
+        "sharpe_ratio":              float(metric_summaries["sharpe_ratio"].aggregate),
+        "max_drawdown":              float(metric_summaries["mdd"].aggregate),
+        "mean_hhi":                  float(metric_summaries["hhi"].aggregate),
+        "transaction_cost_pct":      float(metric_summaries["transaction_cost_percentage"].aggregate),
+        "bootstrap_p_value":         float(bootstrap["p_value"]),
+        "bootstrap_ci_low":          float(bootstrap["ci_95"][0]),
+        "bootstrap_ci_high":         float(bootstrap["ci_95"][1]),
+        "bootstrap_baseline_diff":   float(bootstrap_baseline["observed_diff"]),
+        "bootstrap_baseline_p":      float(bootstrap_baseline["p_value"]),
+        "bootstrap_baseline_ci_low": float(bootstrap_baseline["ci_95"][0]),
+        "bootstrap_baseline_ci_high":float(bootstrap_baseline["ci_95"][1]),
+        "reward_function":           reward_fn,
+        "garch_volatility":          bool(garch),
     }
  
  
@@ -74,21 +79,21 @@ def run_one_seed(seed: int) -> dict | None:
             set_global_seeds(seed)
         try:
             summaries = train_and_test_one_policy(reward_function, seed=seed)
-            all_metric_summaries.append(summaries)
-            all_aggregates.append(extract_aggregates(summaries))
+            all_metric_summaries.append(summaries["test"])
+            all_aggregates.append(extract_aggregates(summaries["test"]))
         except Exception as e:
             print(f"    FAILED {label}: {e}")
             traceback.print_exc()
             return None
-        
+
     # --- Train NSGA2 Rolling ---
     print(f"    Training NSGA2-Rolling...")
     if seed:
         set_global_seeds(seed)
     try:
         nsga2_rolling = train_and_test_one_ngsa2(seed=seed)
-        all_metric_summaries.append(nsga2_rolling)
-        all_aggregates.append(extract_aggregates(nsga2_rolling))
+        all_metric_summaries.append(nsga2_rolling["test"])
+        all_aggregates.append(extract_aggregates(nsga2_rolling["test"]))
     except Exception as e:
         print(f"    FAILED NSGA2-Rolling: {e}")
         traceback.print_exc()
@@ -100,8 +105,8 @@ def run_one_seed(seed: int) -> dict | None:
         set_global_seeds(seed)
     try:
         nsga2_static = train_and_test_one_static_ngsa2(seed=seed)
-        all_metric_summaries.append(nsga2_static)
-        all_aggregates.append(extract_aggregates(nsga2_static))
+        all_metric_summaries.append(nsga2_static["test"])
+        all_aggregates.append(extract_aggregates(nsga2_static["test"]))
     except Exception as e:
         print(f"    FAILED NSGA2-Static: {e}")
         traceback.print_exc()
@@ -140,11 +145,13 @@ def run_one_seed(seed: int) -> dict | None:
  
 METRIC_LABELS = {
     "final_return":         ("Return",        "↑"),
-    "sharpe_ratio":         ("Sharpe Ratio",  "↑"),
-    "max_drawdown":         ("Max Drawdown",  "↑"),
-    "mean_hhi":             ("Mean HHI",      "↓"),
-    "transaction_cost_pct": ("Txn Cost %",    "↓"),
-    "bootstrap_p_value":    ("Bootstrap p",   "↓"),
+    "sharpe_ratio":            ("Sharpe Ratio",    "↑"),
+    "max_drawdown":            ("Max Drawdown",    "↑"),
+    "mean_hhi":                ("Mean HHI",        "↓"),
+    "transaction_cost_pct":    ("Txn Cost %",      "↓"),
+    "bootstrap_p_value":       ("Bootstrap p",     "↓"),
+    "bootstrap_baseline_diff": ("vs Baseline SR",  "↑"),
+    "bootstrap_baseline_p":    ("vs Baseline p",   "↓"),
 }
  
  
@@ -290,7 +297,7 @@ def save_csv(aggregate: dict, all_run_results: list, output_dir: str):
  
  
 def main():
-    N_RUNS = 50
+    N_RUNS = 2
     SEEDS  = [None] * N_RUNS
  
     timestamp  = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

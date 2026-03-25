@@ -250,4 +250,11 @@ class PortfolioEnv(gym.Env):
                 series = self.transaction_cost_percentage_history,
                 aggregate = np.sum(self.transaction_cost_percentage_history)
             ),
+            "portfolio_dates": MetricSummary(
+                name="Portfolio Dates",
+                reward_function_name=self.reward_function.__class__.__name__,
+                direction=None,
+                series=self.dates[self.window_size:],
+                aggregate=None
+            ),
         }

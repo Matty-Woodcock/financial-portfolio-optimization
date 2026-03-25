@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
+import pandas as pd
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
@@ -36,6 +37,7 @@ def run_rolling(df, volatilities, window_size, step_size, prev_prices, seed):
     portfolio_value_history = []
     portfolio_return_history = []
     transaction_cost_percentage_history = []
+    dates_history = []
 
     n_steps = len(df)
     initial_env = True
@@ -104,6 +106,7 @@ def run_rolling(df, volatilities, window_size, step_size, prev_prices, seed):
         portfolio_value_history.extend(step_metric_summaries["portfolio_value"].series[-test_length:])
         portfolio_return_history.extend(env.portfolio_return_history[-test_length:])
         transaction_cost_percentage_history.extend(step_metric_summaries["transaction_cost_percentage"].series[-test_length:])
+        dates_history.extend(test_window.index[-test_length:])
 
         current_portfolio_value = portfolio_value_history[-1]
         prev_prices = train_window.iloc[step_size - 1].values
@@ -113,6 +116,7 @@ def run_rolling(df, volatilities, window_size, step_size, prev_prices, seed):
     env.portfolio_return_history = portfolio_return_history
     env.transaction_cost_percentage_history = transaction_cost_percentage_history
     env.prices = df.values
+    env.dates = pd.DatetimeIndex([pd.NaT] * window_size).append(pd.DatetimeIndex(dates_history))
 
     return env
 
