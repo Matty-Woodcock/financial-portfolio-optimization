@@ -101,18 +101,22 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
     assert len(ngsa2_metric_summaries["portfolio_value"].series) == len(test_df) - RL_WINDOW_SIZE
 
     #Extra Testing
-    #TO DO: Is this correct? Should it reallocate or remain static?
 
-    extra_test_env = PortfolioEnv(extra_test_df, NGSA2(), extra_test_volatilities)
-    obs, _ = extra_test_env.reset()
-    done = False
+    if len(extra_test_df) > 0:
+        extra_test_env = PortfolioEnv(extra_test_df, NGSA2(), extra_test_volatilities)
+        obs, _ = extra_test_env.reset()
+        done = False
 
-    while not done:
-        _, _, done, _, _ = extra_test_env.step(best_action)
+        while not done:
+            _, _, done, _, _ = extra_test_env.step(best_action)
+
+        extra_test_summaries = extra_test_env.get_metric_summaries()
+    else:
+        extra_test_summaries = None
 
     return {
         "test":       ngsa2_metric_summaries,
-        "extra_test": extra_test_env.get_metric_summaries(),
+        "extra_test": extra_test_summaries,
     }
 
 if __name__ == "__main__":

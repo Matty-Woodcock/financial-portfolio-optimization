@@ -110,3 +110,62 @@ def bootstrap_sharpe_test(portfolio_return_history, dates=None, n_bootstraps=100
         "ci_95": (ci_lower, ci_upper),
         "bootstrap_sharpes": bootstrap_sharpes
     }
+
+
+def jobson_korkie_test(returns_a, returns_b, dates=None, end_date=DATA_END):
+    """
+    Memmel (2003) corrected Jobson-Korkie test.
+    H0: Sharpe ratio of A == Sharpe ratio of B
+    """
+    n = len(returns_a)
+    
+    sr_a = calculate_sharpe_ratio(returns_a, dates=dates, end_date=end_date)
+    sr_b = calculate_sharpe_ratio(returns_b, dates=dates, end_date=end_date)
+    
+    # Annualised back to daily for the variance formula
+    sr_a_d = sr_a / np.sqrt(252)
+    sr_b_d = sr_b / np.sqrt(252)
+    
+    var_a = np.var(returns_a, ddof=1)
+    var_b = np.var(returns_b, ddof=1)
+    cov_ab = np.cov(returns_a, returns_b, ddof=1)[0, 1]
+    rho = cov_ab / np.sqrt(var_a * var_b)
+
+    # Memmel (2003) corrected formula
+    theta = (1 / n) * (
+        2 - 2 * rho**2
+        + 0.5 * sr_a_d**2
+        + 0.5 * sr_b_d**2
+        - sr_a_d * sr_b_d * rho
+    )
+
+    z_stat = (sr_a_d - sr_b_d) / np.sqrt(theta)
+
+    from scipy import stats
+    p_value_two_tailed = 2 * (1 - stats.norm.cdf(abs(z_stat)))
+    p_value_one_tailed = 1 - stats.norm.cdf(z_stat)  # H0: SR_A <= SR_B
+
+    return {
+        "sr_a": sr_a,
+        "sr_b": sr_b,
+        "z_stat": float(z_stat),
+        "p_value_one_tailed": float(p_value_one_tailed),
+        "p_value_two_tailed": float(p_value_two_tailed),
+    }
+
+def jobson_korkie_baseline_test(model_returns, dates=None, end_date=DATA_END):
+    """
+    Memmel (2003) corrected Jobson-Korkie test against equal-weight baseline.
+    Reuses the same baseline cache as bootstrap_sharpe_baseline_test.
+    """
+    global _baseline_cache
+    if _baseline_cache is None:
+        from baselines import get_baseline_returns #Avoids circular import
+        test_returns, extra_test_returns = get_baseline_returns()
+        _baseline_cache = {DATA_END: test_returns, EXTRA_TEST_END: extra_test_returns}
+
+    model_returns = np.array(model_returns)
+    baseline_returns = _baseline_cache[end_date]
+    assert len(model_returns) == len(baseline_returns)
+
+    return jobson_korkie_test(model_returns, baseline_returns, dates=dates, end_date=end_date)

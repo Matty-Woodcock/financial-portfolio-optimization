@@ -151,10 +151,12 @@ def train_and_test_one_ngsa2(render=False, seed=None):
     ngsa2_metric_summaries = test_env.get_metric_summaries()
     assert len(ngsa2_metric_summaries["portfolio_value"].series) == len(test_df) - RL_WINDOW_SIZE
 
-    assert len(extra_test_df) > window_size
-    extra_test_env = run_rolling(extra_test_df, extra_test_volatilities, window_size, step_size, prev_prices=test_df.iloc[-1].values, seed=seed)
-    extra_ngsa2_metric_summaries = extra_test_env.get_metric_summaries()
-    assert len(extra_ngsa2_metric_summaries["portfolio_value"].series) == len(extra_test_df) - RL_WINDOW_SIZE
+    if len(extra_test_df) > window_size:
+        extra_test_env = run_rolling(extra_test_df, extra_test_volatilities, window_size, step_size, prev_prices=test_df.iloc[-1].values, seed=seed)
+        extra_ngsa2_metric_summaries = extra_test_env.get_metric_summaries()
+        assert len(extra_ngsa2_metric_summaries["portfolio_value"].series) == len(extra_test_df) - RL_WINDOW_SIZE
+    else:
+        extra_ngsa2_metric_summaries = None
 
     return {
         "test": ngsa2_metric_summaries,

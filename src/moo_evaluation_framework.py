@@ -13,7 +13,7 @@ import numpy as np
 import torch
  
 from rl_approach.rl_reward import PureReturn, LogReturn, HighHHI, LowVolatility
-from test_metrics_calculator import bootstrap_sharpe_test, bootstrap_sharpe_baseline_test
+from test_metrics_calculator import bootstrap_sharpe_test, bootstrap_sharpe_baseline_test, jobson_korkie_baseline_test
 from moo_main import extract_aggregates, moo
  
  
@@ -29,8 +29,10 @@ def set_global_seeds(seed: int):
  
 def extract_metrics(metric_summaries: dict) -> dict:
     returns = metric_summaries["portfolio_returns"].series
-    bootstrap = bootstrap_sharpe_test(returns, dates = metric_summaries["portfolio_dates"].series)
-    bootstrap_baseline = bootstrap_sharpe_baseline_test(returns, dates = metric_summaries["portfolio_dates"].series)
+    dates = metric_summaries["portfolio_dates"].series
+    bootstrap = bootstrap_sharpe_test(returns, dates=dates)
+    bootstrap_baseline = bootstrap_sharpe_baseline_test(returns, dates=dates)
+    jk_baseline = jobson_korkie_baseline_test(returns, dates=dates)
 
     garch = metric_summaries["garch_volatility"].name
     reward_fn = metric_summaries["portfolio_value"].reward_function_name
@@ -48,6 +50,7 @@ def extract_metrics(metric_summaries: dict) -> dict:
         "bootstrap_baseline_p":      float(bootstrap_baseline["p_value"]),
         "bootstrap_baseline_ci_low": float(bootstrap_baseline["ci_95"][0]),
         "bootstrap_baseline_ci_high":float(bootstrap_baseline["ci_95"][1]),
+        "jk_p_one_tailed":           float(jk_baseline["p_value_one_tailed"]),
         "reward_function":           reward_fn,
         "garch_volatility":          bool(garch),
     }
@@ -150,8 +153,9 @@ METRIC_LABELS = {
     "mean_hhi":                ("Mean HHI",        "↓"),
     "transaction_cost_pct":    ("Txn Cost %",      "↓"),
     "bootstrap_p_value":       ("Bootstrap p",     "↓"),
-    "bootstrap_baseline_diff": ("vs Baseline SR",  "↑"),
-    "bootstrap_baseline_p":    ("vs Baseline p",   "↓"),
+    "bootstrap_baseline_diff": ("Bootstrap Baseline SR Diff",  "↑"),
+    "bootstrap_baseline_p":    ("Bootstrap Baseline p",   "↓"),
+    "jk_p_one_tailed":         ("JK p (one-tailed)",      "↓"),
 }
  
  
@@ -297,7 +301,7 @@ def save_csv(aggregate: dict, all_run_results: list, output_dir: str):
  
  
 def main():
-    N_RUNS = 2
+    N_RUNS = 50
     SEEDS  = [None] * N_RUNS
  
     timestamp  = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")

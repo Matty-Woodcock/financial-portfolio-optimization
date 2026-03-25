@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
-from config.constants import ALL_SYMBOLS, DATA_START, EXTRA_TEST_END
+from config.constants import ALL_SYMBOLS, DATA_START, DATA_END, EXTRA_TEST_END
 
 load_dotenv()
 API_KEY = os.getenv("TIINGO_API_KEY")
@@ -37,7 +37,10 @@ def fetch_tiingo_price_data_for_symbol(symbol, start_date_dt, end_date_dt):
 
 def fetch_tiingo_price_data_for_all_symbols():
     try:
-        price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, DATA_START, EXTRA_TEST_END) for symbol in ALL_SYMBOLS}, axis=1)
+        if EXTRA_TEST_END:
+            price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, DATA_START, EXTRA_TEST_END) for symbol in ALL_SYMBOLS}, axis=1)
+        else:
+            price_df = pd.concat({symbol: fetch_tiingo_price_data_for_symbol(symbol, DATA_START, DATA_END) for symbol in ALL_SYMBOLS}, axis=1)
     except ValueError as error:
         raise error
     

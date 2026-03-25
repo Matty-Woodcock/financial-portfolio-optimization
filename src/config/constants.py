@@ -12,11 +12,11 @@ RL_WINDOW_SIZE = 40
 # EVAL_SPLIT = 0.75
 # DATA_START = datetime(2012, 6, 2)
 # DATA_END = datetime(2025, 12, 6)
-# EXTRA_TEST_END = None
+EXTRA_TEST_END = None
 
 #Small configuration
 TRAIN_SPLIT = 0.70
 EVAL_SPLIT = 0.85
 DATA_START = datetime(2017, 6, 2)
 DATA_END = datetime(2024, 12, 6)
-EXTRA_TEST_END = datetime(2025, 12, 3)
+#EXTRA_TEST_END = datetime(2025, 12, 3)

@@ -33,12 +33,16 @@ def get_baseline_returns():
 
     test_df = prices_df.iloc[eval_split_index:]
 
-    test_summaries       = run_baseline_env(test_df, test_volatilities)
-    extra_test_summaries = run_baseline_env(extra_test_df, extra_test_volatilities)
+    test_summaries = run_baseline_env(test_df, test_volatilities)
+
+    if len(extra_test_df) > 0:
+        extra_test_returns = np.array(run_baseline_env(extra_test_df, extra_test_volatilities)["portfolio_returns"].series)
+    else:
+        extra_test_returns = None
 
     return (
         np.array(test_summaries["portfolio_returns"].series),
-        np.array(extra_test_summaries["portfolio_returns"].series),
+        extra_test_returns,
     )
 
 

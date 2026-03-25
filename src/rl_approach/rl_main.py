@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rl_approach.rl_env import PortfolioEnv
 from rl_approach.rl_reward import RewardFunction, PureReturn
 from data.price_data_reader_writer import load_or_update_price_data
-from config.constants import GARCH_BURN_IN_DAYS,  TRAIN_SPLIT, EVAL_SPLIT, RL_WINDOW_SIZE
+from config.constants import GARCH_BURN_IN_DAYS, TRAIN_SPLIT, EVAL_SPLIT, RL_WINDOW_SIZE
 
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3 import PPO
@@ -30,7 +30,6 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
     train_env = PortfolioEnv(train_df, reward_function, train_volatilities)
     eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
     test_env = PortfolioEnv(test_df, reward_function, test_volatilities)
-    extra_test_env = PortfolioEnv(extra_test_df, reward_function, extra_test_volatilities)
 
     callback = EvalCallback(eval_env,
                             best_model_save_path='./logs/',
@@ -60,18 +59,27 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
 
     assert test_env.test_counter == len(test_df) - RL_WINDOW_SIZE
 
-    print("\nTesting Best Model on Extra Test Set")
-    obs, info = extra_test_env.reset()
-    done = False
+    if len(extra_test_df) > 0:
+        print("\nTesting Best Model on Extra Test Set")
 
-    while not done:
-        action, _states = best_model.predict(obs, deterministic=True)
-        obs, reward, done, truncated, info = extra_test_env.step(action)
+        extra_test_env = PortfolioEnv(extra_test_df, reward_function, extra_test_volatilities)
 
-    return {
-        "test":       test_env.get_metric_summaries(),
-        "extra_test": extra_test_env.get_metric_summaries(),
-    }
+        obs, info = extra_test_env.reset()
+        done = False
+
+        while not done:
+            action, _states = best_model.predict(obs, deterministic=True)
+            obs, reward, done, truncated, info = extra_test_env.step(action)
+
+        return {
+            "test": test_env.get_metric_summaries(),
+            "extra_test": extra_test_env.get_metric_summaries()
+        }
+    else:
+        return {
+            "test": test_env.get_metric_summaries(),
+            "extra_test": None,
+        }
 
 if __name__ == "__main__":
     train_and_test_one_policy(PureReturn(), render=True)
