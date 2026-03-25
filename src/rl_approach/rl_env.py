@@ -45,9 +45,9 @@ class PortfolioEnv(gym.Env):
 
         # Observation: normalized prices for both assets over past N weeks
         if self.reward_function.volatility_in_observation_space:
-            observation_space_shape = (window_size + 1) * (self.n_assets - 1) + self.n_assets
+            observation_space_shape = (window_size + 1) * (self.n_assets - 1) #+ self.n_assets
         else:
-            observation_space_shape = (window_size) * (self.n_assets - 1) + self.n_assets
+            observation_space_shape = (window_size) * (self.n_assets - 1) #+ self.n_assets
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(observation_space_shape,), dtype=np.float32
         )
@@ -65,8 +65,8 @@ class PortfolioEnv(gym.Env):
         window = self.prices[self.current_step - self.window_size : self.current_step]
         norm = window / (window[0] + 1e-8) - 1.0
 
-        observation = np.concatenate([norm.flatten(), self.weights])
-        #observation = norm.flatten()
+        #observation = np.concatenate([norm.flatten(), self.weights])
+        observation = norm.flatten()
 
         if self.reward_function.volatility_in_observation_space:
             daily_volatilities = self.volatilities[self.current_step - self.window_size]

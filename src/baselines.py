@@ -12,7 +12,7 @@ from test_metrics_calculator import bootstrap_sharpe_test
 
 def main():
     try:
-        prices_df, _, _, test_volatilities = load_or_update_price_data()
+        prices_df, _, _, test_volatilities, _ = load_or_update_price_data()
     except ValueError as error:
         print(f"Fetching Price Data Failed: {error}")
         return

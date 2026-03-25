@@ -12,7 +12,7 @@ from stable_baselines3 import PPO
 
 def train_and_test_one_policy(reward_function: RewardFunction, render=False, seed=None):
     try:
-        prices_df, train_volatilities, eval_volatilities, test_volatilities = load_or_update_price_data()
+        prices_df, train_volatilities, eval_volatilities, test_volatilities, extra_test_volatilities, extra_test_df = load_or_update_price_data()
     except ValueError as error:
         print(f"Fetching Price Data Failed: {error}")
         return
@@ -21,7 +21,7 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
     burn_in_split_index = GARCH_BURN_IN_DAYS + 1 #Prices Length = Returns Length + 1
     train_split_index = int(len(prices_df[burn_in_split_index:]) * TRAIN_SPLIT) + burn_in_split_index
     eval_split_index = int(len(prices_df[burn_in_split_index:]) * EVAL_SPLIT) + burn_in_split_index
-    
+
     burn_in_df = prices_df[:burn_in_split_index]
     train_df = prices_df.iloc[burn_in_split_index:train_split_index]
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
@@ -30,12 +30,13 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
     train_env = PortfolioEnv(train_df, reward_function, train_volatilities)
     eval_env = PortfolioEnv(eval_df, reward_function, eval_volatilities)
     test_env = PortfolioEnv(test_df, reward_function, test_volatilities)
+    extra_test_env = PortfolioEnv(extra_test_df, reward_function, extra_test_volatilities)
 
-    callback = EvalCallback(eval_env, 
+    callback = EvalCallback(eval_env,
                             best_model_save_path='./logs/',
-                            log_path='./logs/', 
+                            log_path='./logs/',
                             eval_freq=2000,
-                            deterministic=True, 
+                            deterministic=True,
                             render=False)
 
     model = PPO("MlpPolicy", train_env, verbose=1, ent_coef=0.05, seed=seed, device="cpu") #CPU is faster than GPU for this task
@@ -59,7 +60,18 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
 
     assert test_env.test_counter == len(test_df) - RL_WINDOW_SIZE
 
-    return test_env.get_metric_summaries()
+    print("\nTesting Best Model on Extra Test Set")
+    obs, info = extra_test_env.reset()
+    done = False
+
+    while not done:
+        action, _states = best_model.predict(obs, deterministic=True)
+        obs, reward, done, truncated, info = extra_test_env.step(action)
+
+    return {
+        "test":       test_env.get_metric_summaries(),
+        "extra_test": extra_test_env.get_metric_summaries(),
+    }
 
 if __name__ == "__main__":
     train_and_test_one_policy(PureReturn(), render=True)

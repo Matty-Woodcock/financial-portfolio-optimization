@@ -33,7 +33,7 @@ def run_nsga(env, pop_size=80, n_gen=50, seed=None):
 
 def train_and_test_one_static_ngsa2(render=False, seed=None):
     try:
-        prices_df, train_volatilities, eval_volatilities, test_volatilities = load_or_update_price_data()
+        prices_df, train_volatilities, eval_volatilities, test_volatilities, extra_test_volatilities, extra_test_df = load_or_update_price_data()
     except ValueError as error:
         print(f"Fetching Price Data Failed: {error}")
         return
@@ -52,6 +52,7 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
     # print(f"Training on {len(train_df)} days.") #1148
     # print(f"Evaluating on {len(eval_df)} days.") #246
     # print(f"Testing on {len(test_df)} days.") #247
+    # print(f"Extra testing on {len(extra_test_df)} days.")
 
     train_env = PortfolioEnv(train_df, NGSA2(), train_volatilities)
     eval_env = PortfolioEnv(eval_df, NGSA2(), eval_volatilities)
@@ -98,7 +99,21 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
 
     ngsa2_metric_summaries = test_env.get_metric_summaries()
     assert len(ngsa2_metric_summaries["portfolio_value"].series) == len(test_df) - RL_WINDOW_SIZE
-    return ngsa2_metric_summaries
+
+    #Extra Testing
+    #TO DO: Is this correct? Should it reallocate or remain static?
+
+    extra_test_env = PortfolioEnv(extra_test_df, NGSA2(), extra_test_volatilities)
+    obs, _ = extra_test_env.reset()
+    done = False
+
+    while not done:
+        _, _, done, _, _ = extra_test_env.step(best_action)
+
+    return {
+        "test":       ngsa2_metric_summaries,
+        "extra_test": extra_test_env.get_metric_summaries(),
+    }
 
 if __name__ == "__main__":
     train_and_test_one_static_ngsa2(render=False)

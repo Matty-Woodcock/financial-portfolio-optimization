@@ -35,32 +35,32 @@ def calculate_mdd_metric(portfolio_value_history):
         mdd_history.append((daily_portfolio_value - peak_porfolio_value) / peak_porfolio_value)
     return mdd_history, min(mdd_history)
 
-def calculate_sharpe_ratio(portfolio_return_history, dates = None):
+def calculate_sharpe_ratio(portfolio_return_history, dates=None, end_date=DATA_END):
     returns = np.array(portfolio_return_history)
 
-    if dates is not None and len(dates) == len(returns): #TO DO: Needs fixing
+    if dates is not None and len(dates) == len(returns):
         rf_daily = np.array([get_daily_rf(date) for date in dates])
     else:
-        test_start = DATA_START + (DATA_END - DATA_START) * EVAL_SPLIT
-        rf_daily = RF_DAILY_SERIES[test_start:DATA_END].mean()
+        if end_date == DATA_END:
+            test_start = DATA_START + (DATA_END - DATA_START) * EVAL_SPLIT
+        else:
+            test_start = DATA_END
+        rf_daily = RF_DAILY_SERIES[test_start:end_date].mean()
 
     excess = returns - rf_daily
     return (excess.mean() / excess.std(ddof=1)) * np.sqrt(252)
-
 #TO DO: Review AI
-def bootstrap_sharpe_test(portfolio_return_history, n_bootstraps=1000, block_size=10):
-    """
-    Block bootstrap test of H0: Sharpe ratio <= 0
-    Returns the p-value (one-tailed) and a 95% confidence interval.
-    Block size of ~sqrt(T) is the standard rule of thumb.
-    """
+def bootstrap_sharpe_test(portfolio_return_history, n_bootstraps=1000, block_size=10, end_date=DATA_END):
     returns = np.array(portfolio_return_history)
 
     bs = CircularBlockBootstrap(block_size, returns)
-    bootstrap_sharpes = bs.apply(calculate_sharpe_ratio, n_bootstraps)
+    bootstrap_sharpes = bs.apply(
+        lambda x: calculate_sharpe_ratio(x, end_date=end_date),
+        n_bootstraps
+    )
 
-    observed_sharpe = calculate_sharpe_ratio(returns) #TO DO: Needs dates
-    p_value = float(np.mean(bootstrap_sharpes <= 0))  #H0: Sharpe <= 0
+    observed_sharpe = calculate_sharpe_ratio(returns, end_date=end_date)
+    p_value = float(np.mean(bootstrap_sharpes <= 0))
     ci_lower = float(np.percentile(bootstrap_sharpes, 2.5))
     ci_upper = float(np.percentile(bootstrap_sharpes, 97.5))
 
@@ -70,4 +70,3 @@ def bootstrap_sharpe_test(portfolio_return_history, n_bootstraps=1000, block_siz
         "ci_95": (ci_lower, ci_upper),
         "bootstrap_sharpes": bootstrap_sharpes
     }
-
