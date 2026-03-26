@@ -78,12 +78,12 @@ def main():
     all_policy_metric_aggregates = []
     all_policy_extra_test_summaries = []
 
-    # reward_functions = [PureReturn(), LogReturn(), HighHHI(), LowVolatility(),
-    #                     PureReturn(volatility_in_observation_space=True),
-    #                     LogReturn(volatility_in_observation_space=True),
-    #                     HighHHI(volatility_in_observation_space=True),
-    #                     LowVolatility(volatility_in_observation_space=True),]
-    reward_functions = []
+    reward_functions = [PureReturn(), LogReturn(), HighHHI(), LowVolatility(),
+                        PureReturn(volatility_in_observation_space=True),
+                        LogReturn(volatility_in_observation_space=True),
+                        HighHHI(volatility_in_observation_space=True),
+                        LowVolatility(volatility_in_observation_space=True),]
+    #reward_functions = []
 
     for i in range(1):
         for reward_function in reward_functions:
@@ -103,11 +103,6 @@ def main():
     all_policy_metric_summaries.append(ngsa2_static_metric_summaries["test"])
     all_policy_metric_aggregates.append(extract_aggregates(ngsa2_static_metric_summaries["test"]))
     all_policy_extra_test_summaries.append(ngsa2_static_metric_summaries["extra_test"])
-
-    # print("\nLength Rolling EA:", len(ngsa2_rolling_metric_summaries["test"]["portfolio_value"].series))
-    # print(f"Length Static EA: {len(ngsa2_static_metric_summaries["test"]["portfolio_value"].series)}\n")
-    # print("\nLength Rolling EA:", len(ngsa2_rolling_metric_summaries["extra_test"]["portfolio_value"].series))
-    # print(f"Length Static EA: {len(ngsa2_static_metric_summaries["extra_test"]["portfolio_value"].series)}\n")
     
     directions = [
         all_policy_metric_summaries[0]["portfolio_value"].direction,
@@ -119,8 +114,7 @@ def main():
     pareto_front_policy_indicies = moo(all_policy_metric_aggregates, directions)
 
     pareto_front_policy_metric_summaries = [all_policy_metric_summaries[i] for i in pareto_front_policy_indicies]
-    pareto_front_extra_test_metric_summaries = [all_policy_extra_test_summaries[i] for i in pareto_front_policy_indicies]
-
+    pareto_front_extra_test_metric_summaries = [extra for extra in [all_policy_extra_test_summaries[i] for i in pareto_front_policy_indicies] if extra is not None]
     print([extract_aggregates(policy_metric_summaries) for policy_metric_summaries in pareto_front_policy_metric_summaries])
 
     #Plotting Results Graphs

@@ -63,11 +63,10 @@ def run_rolling(df, volatilities, window_size, step_size, prev_prices, seed):
         pareto_actions = res.X
         pareto_objectives = res.F
 
-        #Choose highest Sharpe solution
-        # best_index = np.argmin(objective_one)
-        # sorted_indices = np.argsort(objective_one)
-        # one_quarter_index = sorted_indices[int(0.25 * len(sorted_indices))]
-        # best_action = pareto_actions[best_index]
+        objective_one = pareto_objectives[:, 0]
+        objective_two = pareto_objectives[:, 1]
+        sign_correct_objective_one = -objective_one
+        sign_correct_objective_two = -objective_two
 
         #Normalise objectives to [0,1] so neither dominates by scale
         obj_min = pareto_objectives.min(axis=0)
@@ -81,8 +80,8 @@ def run_rolling(df, volatilities, window_size, step_size, prev_prices, seed):
         best_index = np.argmin(distances)
         best_action = pareto_actions[best_index]
 
-        # if start_index == 0:
-        #     plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
+        if start_index == 0:
+            plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
         #Testing
 
@@ -137,11 +136,6 @@ def train_and_test_one_ngsa2(render=False, seed=None):
     train_df = prices_df.iloc[burn_in_split_index:train_split_index]
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
     test_df = prices_df.iloc[eval_split_index:]
-
-    # print(f"Burning in on {len(burn_in_df)} days.") #251
-    # print(f"Training on {len(train_df)} days.") #1148
-    # print(f"Evaluating on {len(eval_df)} days.") #246
-    # print(f"Testing on {len(test_df)} days.") #247
 
     window_size = 40
     step_size = 10

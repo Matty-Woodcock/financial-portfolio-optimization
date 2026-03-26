@@ -94,8 +94,8 @@ def run_one_seed(seed: int, skip_rl: bool = False) -> dict:
                 metric_summaries = train_and_test_one_ngsa2(seed=seed)
             elif method_tag == "nsga2_static":
                 metric_summaries = train_and_test_one_static_ngsa2(seed=seed)
- 
-            run_results[label] = extract_metrics(metric_summaries)
+
+            run_results[label] = extract_metrics(metric_summaries["test"])
             elapsed = time.time() - t0
             sr  = run_results[label]["sharpe_ratio"]
             ret = run_results[label]["final_return"]
@@ -238,7 +238,7 @@ def save_csv_table(aggregate: dict, output_dir: str):
  
  
 def main():
-    N_RUNS  = 10
+    N_RUNS  = 1
     SKIP_RL = False
     # SEEDS   = list(range(N_RUNS))
     SEEDS  = [None] * N_RUNS

@@ -81,13 +81,7 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
     best_index = np.argmin(distances)
     best_action = pareto_actions[best_index]
 
-    #Choose highest Sharpe solution
-    # best_index = np.argmin(objective_one)
-    # best_action = pareto_actions[best_index]
-
-    # print(pareto_objectives[best_index])
-
-    # plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
+    plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
     #Testing
 
