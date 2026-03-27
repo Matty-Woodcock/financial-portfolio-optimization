@@ -43,4 +43,4 @@ It is recommended to only switch between the Large and Small configurations and 
 
 ## Output
 
-Each evaluation produces printed metrics including return, Sharpe ratio, max drawdown, HHI, transaction costs, and bootstrap p-value. Where applicable, portfolio weight visualisations show how allocations evolve across the test period.
+Each evaluation produces printed metrics including return, Sharpe ratio, max drawdown, HHI, transaction costs, and bootstrap p-value. Where applicable, portfolio weight visualisations show how allocations evolve across the test period. The additional statistical tests against the equal-weight baseline (bootstrap and Jobson-Korkie) are only computed when running moo_evaluation_framework.py.
