@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 
-from config.constants import DATA_START, DATA_END
-
 def read_rf_rates():
     df = pd.read_csv("data/rf_rates.csv", parse_dates = ["observation_date"])
     df = df.set_index("observation_date")

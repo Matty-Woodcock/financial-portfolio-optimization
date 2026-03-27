@@ -8,7 +8,7 @@ import pandas as pd
 
 from data.price_data_fetcher import fetch_tiingo_price_data_for_all_symbols
 from data.volatility_calculator import volatility_calculator
-from config.constants import DATA_END
+from config.constants import DATA_END, EXTRA_TEST_END
 
 CSV_FILE = os.path.join(BASE_DIR, "data", "price_data.csv")
 
@@ -46,5 +46,5 @@ def load_or_update_price_data(force_refresh=False):
     return prices_df, train_volatilities, eval_volatilities, test_volatilities, extra_test_volatilities, extra_test_df
 
 if __name__ == "__main__":
+    print("Refreshing price and volatility data!")
     prices = load_or_update_price_data(force_refresh=True)
-    #print(prices.head())

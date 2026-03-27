@@ -26,7 +26,7 @@ def run_nsga(env, initial_env, initial_weights, prev_prices, pop_size=40, n_gen=
         algorithm,
         ('n_gen', n_gen),
         verbose=True,
-        seed=None
+        seed=seed
     )
 
     return res
@@ -158,4 +158,10 @@ def train_and_test_one_ngsa2(render=False, seed=None):
     }
 
 if __name__ == "__main__":
-    train_and_test_one_ngsa2(render=False)
+    results = train_and_test_one_ngsa2(render=False)
+    test_metric_summaries = results["test"]
+
+    print(f"\nFinal Portfolio Value = {test_metric_summaries['portfolio_value'].aggregate}")
+    print(f"Sharpe Ratio = {test_metric_summaries['sharpe_ratio'].aggregate}")
+    print(f"Max Drawdown = {test_metric_summaries['mdd'].aggregate}")
+    print(f"Mean HHI = {test_metric_summaries['hhi'].aggregate}")

@@ -43,11 +43,11 @@ class PortfolioEnv(gym.Env):
             dtype=np.float32
         )
 
-        # Observation: normalized prices for both assets over past N weeks
+        #Observation space contains normalized prices for 11 assets over past 40 days
         if self.reward_function.volatility_in_observation_space:
-            observation_space_shape = (window_size + 1) * (self.n_assets - 1) #+ self.n_assets
+            observation_space_shape = (window_size + 1) * (self.n_assets - 1) #+ self.n_assets #This is uncommented when in Augmented configuration
         else:
-            observation_space_shape = (window_size) * (self.n_assets - 1) #+ self.n_assets
+            observation_space_shape = (window_size) * (self.n_assets - 1) #+ self.n_assets #This is uncommented when in Augmented configuration
         self.observation_space = spaces.Box(
             low=-np.inf, high=np.inf, shape=(observation_space_shape,), dtype=np.float32
         )
@@ -65,7 +65,7 @@ class PortfolioEnv(gym.Env):
         window = self.prices[self.current_step - self.window_size : self.current_step]
         norm = window / (window[0] + 1e-8) - 1.0
 
-        #observation = np.concatenate([norm.flatten(), self.weights])
+        #observation = np.concatenate([norm.flatten(), self.weights]) #This is uncommented when in Augmented configuration
         observation = norm.flatten()
 
         if self.reward_function.volatility_in_observation_space:
@@ -76,9 +76,6 @@ class PortfolioEnv(gym.Env):
     
     def step(self, action):
         new_weights = self._softmax(action)
-        # total_weight = np.sum(weights) + 1e-8
-        # weights = weights / total_weight
-        # self.weights = weights
 
         portfolio_value_before_step = self.portfolio_value
 
@@ -88,12 +85,9 @@ class PortfolioEnv(gym.Env):
         else:
             turnover, self.cost = 0.0, 0.0 #This occurs on very first step when initially allocating portfolio
         
-        #TO DO: Rewrite this functionality better
         portfolio_value_after_cost = self.portfolio_value - self.cost
-        #transaction_cost_percentage = (self.cost / self.portfolio_value) * 100
-        transaction_cost_percentage = self.cost * 100
+        transaction_cost_percentage = self.cost * 100 #Transaction costs as percentage of initial capital
 
-        #Below can potentially be changed as we already calculated portfolio returns? But probably not.
         if self.current_step == 0:
             if self.prev_prices is None:
                 raise ValueError("In PortfolioEnv, current_step starting from zero but prev_prices is None.")
@@ -102,15 +96,11 @@ class PortfolioEnv(gym.Env):
             prev_prices = self.prices[self.current_step - 1]
         current_prices = self.prices[self.current_step]
 
-        self.test_counter += 1
+        self.test_counter += 1 #Used for debugging
 
         #Compute returns per asset and then combine with cash
-        #asset_returns = (current_prices - prev_prices) / (prev_prices + 1e-8)
         asset_returns = (current_prices - prev_prices) / prev_prices
         asset_returns_with_cash = np.append(0, asset_returns)
-        # print(asset_returns)
-        # print(prev_prices)
-        # print(current_prices)
 
         portfolio_return = np.dot(new_weights, asset_returns_with_cash)
         self.portfolio_value = portfolio_value_after_cost * (1 + portfolio_return)
@@ -175,11 +165,9 @@ class PortfolioEnv(gym.Env):
 
     def render(self):
         current_date_str = self.dates[self.current_step - 1].strftime('%Y-%m-%d')
-        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)} {self.current_step - 2}")
+        print(f"{current_date_str} (Day {self.current_step}): Portfolio Value: {self.portfolio_value:.4f}, Cost: {self.cost}, {format_weights(self.tickers, self.weights)}")
 
     def get_metric_summaries(self) -> dict[str, MetricSummary]:
-        #return [self.portfolio_value, calculate_hhi_metric(self.weights_history), calculate_mdd_metric(self.portfolio_value_history)]
-
         hhi_series, mean_hhi = calculate_hhi_metric(self.weights_history)
         mdd_series, max_drawdown = calculate_mdd_metric(self.portfolio_value_history)
 

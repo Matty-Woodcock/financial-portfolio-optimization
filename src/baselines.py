@@ -12,6 +12,7 @@ from test_metrics_calculator import bootstrap_sharpe_test
 
 def run_baseline_env(df, volatilities):
     baseline_weights = np.array([1/len(ALL_SYMBOLS_WITH_CASH)] * len(ALL_SYMBOLS_WITH_CASH))
+    #baseline_weights = np.array([-100, -100, -100, -100, -100, 100, -100, -100, -100, -100, -100, -100]) #Uncomment to test S&P 500
     env = PortfolioEnv(df, NGSA2(), volatilities)
     obs, _ = env.reset()
     done = False
@@ -61,12 +62,12 @@ def main():
 
     baseline_bootstrap_results = bootstrap_sharpe_test(baseline_metric_summaries["portfolio_returns"].series, dates = baseline_metric_summaries["portfolio_dates"].series)
 
-    print(f"Final Portfolio Value = {baseline_metric_summaries["portfolio_value"].aggregate}")
-    print(f"Sharpe Ratio = {baseline_metric_summaries["sharpe_ratio"].aggregate}")
-    print(f"Max Drawdown = {baseline_metric_summaries["mdd"].aggregate}")
-    print(f"Mean HHI = {baseline_metric_summaries["hhi"].aggregate}")
-    print(f"Bootstrap p-value = {baseline_bootstrap_results["p_value"]}")
-    print(f"Bootstrap Confidence Interval = {baseline_bootstrap_results["ci_95"]}")
+    print(f"Final Portfolio Value = {baseline_metric_summaries['portfolio_value'].aggregate}")
+    print(f"Sharpe Ratio = {baseline_metric_summaries['sharpe_ratio'].aggregate}")
+    print(f"Max Drawdown = {baseline_metric_summaries['mdd'].aggregate}")
+    print(f"Mean HHI = {baseline_metric_summaries['hhi'].aggregate}")
+    print(f"Bootstrap p-value = {baseline_bootstrap_results['p_value']}")
+    print(f"Bootstrap Confidence Interval = {baseline_bootstrap_results['ci_95']}")
 
     assert baseline_metric_summaries["sharpe_ratio"].aggregate == baseline_bootstrap_results["observed_sharpe"]
 

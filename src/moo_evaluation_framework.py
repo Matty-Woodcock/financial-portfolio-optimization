@@ -74,11 +74,13 @@ def run_one_seed(seed: int) -> dict | None:
  
     all_metric_summaries = []
     all_aggregates = []
+
+    #RL Variants
  
     for reward_function in reward_functions:
         label = f"RL-{reward_function.__class__.__name__}(GARCH={reward_function.volatility_in_observation_space})"
         print(f"    Training {label}...")
-        if seed:
+        if seed is not None:
             set_global_seeds(seed)
         try:
             summaries = train_and_test_one_policy(reward_function, seed=seed)
@@ -89,9 +91,10 @@ def run_one_seed(seed: int) -> dict | None:
             traceback.print_exc()
             return None
 
-    # --- Train NSGA2 Rolling ---
+    #NSGA2 Rolling
+
     print(f"    Training NSGA2-Rolling...")
-    if seed:
+    if seed is not None:
         set_global_seeds(seed)
     try:
         nsga2_rolling = train_and_test_one_ngsa2(seed=seed)
@@ -102,9 +105,10 @@ def run_one_seed(seed: int) -> dict | None:
         traceback.print_exc()
         return None
 
-    # --- Train NSGA2 Static ---
+    #NSGA2 Static
+
     print(f"    Training NSGA2-Static...")
-    if seed:
+    if seed is not None:
         set_global_seeds(seed)
     try:
         nsga2_static = train_and_test_one_static_ngsa2(seed=seed)

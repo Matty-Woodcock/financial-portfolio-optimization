@@ -28,11 +28,9 @@ class PortfolioNSGA2RollingProblem(ElementwiseProblem):
 
         objective_one = metrics["portfolio_value"].aggregate
         objective_two = metrics["mdd"].aggregate
-        #objective_two = metrics["transaction_cost_percentage"].aggregate
         
         #pymoo tries to minimised by default
         out["F"] = [-objective_one, -objective_two]
-        #out["F"] = [-objective_one, objective_two]
 
 class PortfolioNSGA2StaticProblem(ElementwiseProblem):
 
@@ -57,9 +55,6 @@ class PortfolioNSGA2StaticProblem(ElementwiseProblem):
 
         objective_one = metrics["portfolio_value"].aggregate
         objective_two = metrics["mdd"].aggregate
-        #objective_two = metrics["transaction_cost_percentage"].aggregate
         
         #pymoo tries to minimised by default
         out["F"] = [-objective_one, -objective_two]
-        #out["F"] = [-objective_one, objective_two]
-

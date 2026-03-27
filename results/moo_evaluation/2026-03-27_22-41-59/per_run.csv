@@ -1,0 +1,2 @@
+Run,Seed,Pareto Front Size,Return,Sharpe Ratio,Max Drawdown,Mean HHI,Txn Cost %,Bootstrap p,Bootstrap Baseline SR Diff,Bootstrap Baseline p,JK p (one-tailed),Best Method
+0,,5,1.276317,2.206616,-0.052447,0.561369,3.180046,0.012000,1.129419,0.110000,0.165254,HighHHI(GARCH=False)

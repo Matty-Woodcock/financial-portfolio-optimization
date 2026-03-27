@@ -1,6 +1,5 @@
 import requests
 import pandas as pd
-import matplotlib.pyplot as plt
 import os
 
 from datetime import datetime, timedelta
@@ -44,18 +43,10 @@ def fetch_tiingo_price_data_for_all_symbols():
     except ValueError as error:
         raise error
     
-    #assert len(price_df) - 1642 == GARCH_BURN_IN_DAYS
-    
     return price_df
 
 if __name__ == "__main__":
     price_df = fetch_tiingo_price_data_for_all_symbols()
     print(price_df)
-
-#Original Dates: 2018-06-01 & 2024-12-06
-#Original Length: 1641 Trading Days
-
-#New Dates: 2017-06-02 & 2024-12-06
-#New Length: 1892 Trading Days
 
 #There are approximately 252 trading days in a year!

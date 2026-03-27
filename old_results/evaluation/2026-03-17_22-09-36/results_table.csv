@@ -1,3 +1,0 @@
-Method,N Runs,Return Mean,Return Std,Return Best,Sharpe Ratio Mean,Sharpe Ratio Std,Sharpe Ratio Best,Max Drawdown Mean,Max Drawdown Std,Max Drawdown Best,Mean HHI Mean,Mean HHI Std,Mean HHI Best,Txn Cost % Mean,Txn Cost % Std,Txn Cost % Best,Bootstrap p Mean,Bootstrap p Std,Bootstrap p Best,Best Method
-RL-PureReturn,10,1.677694,0.386960,2.352261,0.729228,0.439444,1.228989,-0.207902,0.074636,-0.161750,0.525755,0.205324,0.726714,17.759316,8.628178,28.431204,0.144800,0.196228,0.014000,PureReturn(GARCH=False)
-RL-PureReturn+GARCH,10,1.428366,0.294928,1.738054,0.552667,0.524807,1.179101,-0.204241,0.089156,-0.140528,0.423625,0.233923,0.083378,13.746271,7.768736,0.287786,0.222100,0.242727,0.012000,PureReturn(GARCH=True)

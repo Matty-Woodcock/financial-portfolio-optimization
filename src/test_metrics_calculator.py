@@ -3,7 +3,6 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np  
-import matplotlib.pyplot as plt
 
 from dataclasses import dataclass
 from arch.bootstrap import CircularBlockBootstrap
@@ -89,7 +88,6 @@ def bootstrap_sharpe_baseline_test(model_returns, dates=None, n_bootstraps=1000,
         "ci_95":         (ci_lower, ci_upper),
     }
 
-#TO DO: Review AI
 def bootstrap_sharpe_test(portfolio_return_history, dates=None, n_bootstraps=1000, block_size=10, end_date=DATA_END):
     returns = np.array(portfolio_return_history)
 
@@ -122,7 +120,7 @@ def jobson_korkie_test(returns_a, returns_b, dates=None, end_date=DATA_END):
     sr_a = calculate_sharpe_ratio(returns_a, dates=dates, end_date=end_date)
     sr_b = calculate_sharpe_ratio(returns_b, dates=dates, end_date=end_date)
     
-    # Annualised back to daily for the variance formula
+    #Annualised back to daily for the variance formula
     sr_a_d = sr_a / np.sqrt(252)
     sr_b_d = sr_b / np.sqrt(252)
     
@@ -131,7 +129,7 @@ def jobson_korkie_test(returns_a, returns_b, dates=None, end_date=DATA_END):
     cov_ab = np.cov(returns_a, returns_b, ddof=1)[0, 1]
     rho = cov_ab / np.sqrt(var_a * var_b)
 
-    # Memmel (2003) corrected formula
+    #Memmel (2003) corrected formula
     theta = (1 / n) * (
         2 - 2 * rho**2
         + 0.5 * sr_a_d**2

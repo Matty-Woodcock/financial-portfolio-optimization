@@ -3,7 +3,6 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from pymoo.algorithms.moo.nsga2 import NSGA2
 from pymoo.optimize import minimize
@@ -26,7 +25,7 @@ def run_nsga(env, pop_size=80, n_gen=50, seed=None):
         algorithm,
         ('n_gen', n_gen),
         verbose=True, 
-        seed=None
+        seed=seed
     )
 
     return res
@@ -48,10 +47,10 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
     eval_df = prices_df.iloc[train_split_index:eval_split_index]
     test_df = prices_df.iloc[eval_split_index:]
 
-    # print(f"Burning in on {len(burn_in_df)} days.") #251
-    # print(f"Training on {len(train_df)} days.") #1148
-    # print(f"Evaluating on {len(eval_df)} days.") #246
-    # print(f"Testing on {len(test_df)} days.") #247
+    # print(f"Burning in on {len(burn_in_df)} days.")
+    # print(f"Training on {len(train_df)} days.")
+    # print(f"Evaluating on {len(eval_df)} days.")
+    # print(f"Testing on {len(test_df)} days.")
     # print(f"Extra testing on {len(extra_test_df)} days.")
 
     train_env = PortfolioEnv(train_df, NGSA2(), train_volatilities)
@@ -81,7 +80,7 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
     best_index = np.argmin(distances)
     best_action = pareto_actions[best_index]
 
-    plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
+    # plot_pareto_front(sign_correct_objective_one, sign_correct_objective_two, best_index)
 
     #Testing
 
@@ -114,4 +113,10 @@ def train_and_test_one_static_ngsa2(render=False, seed=None):
     }
 
 if __name__ == "__main__":
-    train_and_test_one_static_ngsa2(render=False)
+    results = train_and_test_one_static_ngsa2(render=False)
+    test_metric_summaries = results["test"]
+
+    print(f"\nFinal Portfolio Value = {test_metric_summaries['portfolio_value'].aggregate}")
+    print(f"Sharpe Ratio = {test_metric_summaries['sharpe_ratio'].aggregate}")
+    print(f"Max Drawdown = {test_metric_summaries['mdd'].aggregate}")
+    print(f"Mean HHI = {test_metric_summaries['hhi'].aggregate}")

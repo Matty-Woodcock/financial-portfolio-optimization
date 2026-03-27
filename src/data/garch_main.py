@@ -13,8 +13,8 @@ class GARCHVolatilityModel:
         
         self.returns_buffer = deque(maxlen=window_size)
         self.steps_since_refit = 0
-        self.model_fit = None  # last fitted GARCH model
-        self.last_forecast = None  # last forecasted variance
+        self.model_fit = None  #Last fitted GARCH model
+        self.last_forecast = None  #Last forecasted variance
 
         self.total_steps = 0
     
@@ -28,7 +28,7 @@ class GARCHVolatilityModel:
 
     def forecast_volatility(self):
         if not self.can_forecast():
-            return None #Not enough data to forecast probability
+            return None #Not enough data to forecast volatility
 
         #Refit GARCH only every refit_every steps
         if (self.model_fit is None) or (self.steps_since_refit >= self.refit_every):
@@ -47,7 +47,6 @@ class MultiAssetGARCH:
         self.models = [GARCHVolatilityModel() for _ in range(n_assets)]
 
         self.total_runtime = 0
-        self.total_calls = 0
 
     def add_returns(self, asset_returns):
         for i in range(self.n_assets):
@@ -60,7 +59,6 @@ class MultiAssetGARCH:
             volatilities.append(model.forecast_volatility())
         end_time = time.time()
         multi_asset_garch_forecast_time = end_time - start_time
-        self.total_runtime += multi_asset_garch_forecast_time #TO DO: Make average
-        self.total_calls += 1
-        #input(f"Multi-Asset GARCH Forecast Time: {multi_asset_garch_forecast_time:.4f} Seconds")
+        self.total_runtime += multi_asset_garch_forecast_time
+        #print(f"Multi-Asset GARCH Forecast Time: {multi_asset_garch_forecast_time:.4f} Seconds")
         return np.array(volatilities)

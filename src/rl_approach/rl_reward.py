@@ -29,7 +29,7 @@ class LowVolatility(RewardFunction):
         portfolio_variance = np.sum((weights ** 2) * (daily_volatilities_with_cash ** 2))
         return pure_return - alpha * portfolio_variance
     
-class NGSA2(RewardFunction): #TO DO: Fix name
+class NGSA2(RewardFunction):
     def __call__(self, **kwargs):
         raise NotImplementedError #No reward function for NGSA2
 

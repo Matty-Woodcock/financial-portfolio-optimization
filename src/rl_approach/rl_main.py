@@ -83,13 +83,3 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
 
 if __name__ == "__main__":
     train_and_test_one_policy(PureReturn(), render=True)
-
-#First trading day of test period
-# [ 45.03986489  99.90579164  62.17089817  90.8635     250.31431039
-#  168.9674853   96.64447269 115.83        36.65840437 347.12888221
-#   57.94640514]
-# [ 44.7875209   97.76256747  61.03703564  88.961      249.00679125
-#  166.5797565   96.31277811 115.65        36.67427038 337.8984206
-#   57.8190815 ]
-
-#290 [0.02263598] Volatility

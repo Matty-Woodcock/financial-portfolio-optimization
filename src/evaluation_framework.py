@@ -28,15 +28,15 @@ def set_global_seeds(seed: int):
  
 METHODS = [
     ("RL-PureReturn",         "rl", lambda: PureReturn()),
-    # ("RL-LogReturn",          "rl", lambda: LogReturn()),
-    # ("RL-HighHHI",            "rl", lambda: HighHHI()),
-    # ("RL-LowVolatility",      "rl", lambda: LowVolatility()),
-    # ("RL-PureReturn+GARCH",   "rl", lambda: PureReturn(volatility_in_observation_space=True)),
-    # ("RL-LogReturn+GARCH",    "rl", lambda: LogReturn(volatility_in_observation_space=True)),
-    # ("RL-HighHHI+GARCH",      "rl", lambda: HighHHI(volatility_in_observation_space=True)),
-    # ("RL-LowVol+GARCH",       "rl", lambda: LowVolatility(volatility_in_observation_space=True)),
-    # ("NSGA2-Rolling",         "nsga2_rolling", None),
-    # ("NSGA2-Static",          "nsga2_static",  None),
+    ("RL-LogReturn",          "rl", lambda: LogReturn()),
+    ("RL-HighHHI",            "rl", lambda: HighHHI()),
+    ("RL-LowVolatility",      "rl", lambda: LowVolatility()),
+    ("RL-PureReturn+GARCH",   "rl", lambda: PureReturn(volatility_in_observation_space=True)),
+    ("RL-LogReturn+GARCH",    "rl", lambda: LogReturn(volatility_in_observation_space=True)),
+    ("RL-HighHHI+GARCH",      "rl", lambda: HighHHI(volatility_in_observation_space=True)),
+    ("RL-LowVol+GARCH",       "rl", lambda: LowVolatility(volatility_in_observation_space=True)),
+    ("NSGA2-Rolling",         "nsga2_rolling", None),
+    ("NSGA2-Static",          "nsga2_static",  None),
 ]
  
  
@@ -83,7 +83,7 @@ def run_one_seed(seed: int, skip_rl: bool = False) -> dict:
             continue
  
         print(f"\n  [{label}]  seed={seed}")
-        if seed:
+        if seed is not None:
             set_global_seeds(seed)
         t0 = time.time()
  
@@ -239,8 +239,8 @@ def save_csv_table(aggregate: dict, output_dir: str):
  
 def main():
     N_RUNS  = 1
-    SKIP_RL = False
-    # SEEDS   = list(range(N_RUNS))
+    SKIP_RL = False #Deprecated code
+    #SEEDS = list(range(N_RUNS)) #Uncomment for seeded evaluation, this produced poor results in practice
     SEEDS  = [None] * N_RUNS
  
     timestamp  = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
