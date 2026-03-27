@@ -10,6 +10,8 @@ from config.constants import GARCH_BURN_IN_DAYS, TRAIN_SPLIT, EVAL_SPLIT, RL_WIN
 from stable_baselines3.common.callbacks import EvalCallback
 from stable_baselines3 import PPO
 
+LOGS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "logs")
+
 def train_and_test_one_policy(reward_function: RewardFunction, render=False, seed=None):
     try:
         prices_df, train_volatilities, eval_volatilities, test_volatilities, extra_test_volatilities, extra_test_df = load_or_update_price_data()
@@ -32,8 +34,8 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
     test_env = PortfolioEnv(test_df, reward_function, test_volatilities)
 
     callback = EvalCallback(eval_env,
-                            best_model_save_path='./logs/',
-                            log_path='./logs/',
+                            best_model_save_path=LOGS_DIR,
+                            log_path=LOGS_DIR,
                             eval_freq=2000,
                             deterministic=True,
                             render=False)
@@ -45,7 +47,7 @@ def train_and_test_one_policy(reward_function: RewardFunction, render=False, see
     print("Training Complete")
 
     print("\nLoading Best Model for Testing")
-    best_model = PPO.load("./logs/best_model") #Automatically appends .zip
+    best_model = PPO.load(os.path.join(LOGS_DIR, "best_model")) #Automatically appends .zip
 
     print("\nTesting Best Model")
     obs, info = test_env.reset()

@@ -37,6 +37,8 @@ To switch between them, update `DATA_START`, `DATA_END`, `TRAIN_SPLIT`, and `EVA
 
 An **extra test set** can also be defined by setting `EXTRA_TEST_END` in `constants.py`. When set, all pipelines will automatically evaluate the non-dominated models on this additional out-of-sample period and report results separately.
 
+If constants.py is changed, run price_data_reader_writer.py to regenerate the price data and GARCH volatility arrays before running any experiments.
+
 It is recommended to only switch between the Large and Small configurations and not change any of the individual values.
 
 ---
